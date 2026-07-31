@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place Bid - Federal University Dutse Marketplace</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
+      </a>
+      <div class="ms-auto d-flex align-items-center" id="navAuthActions"></div>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+          <div class="card-header bg-primary text-white p-4">
+            <h4 class="fw-bold mb-0"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Submit Live Bid</h4>
+            <small class="opacity-75">Compete in real-time for campus assets.</small>
+          </div>
+
+          <div class="card-body p-4" id="bidContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="text-muted mt-2 mb-0">Loading item details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const getApiUrl = () => {
+      return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? 'http://localhost:5000'
+        : window.location.origin;
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const auctionId = urlParams.get('id');
+
+    async function loadAuctionDetails() {
+      const container = document.getElementById('bidContainer');
+
+      if (!auctionId) {
+        container.innerHTML = `
+          <div class="alert alert-danger text-center">
+            Invalid Auction ID. <a href="index.html" class="alert-link">Return to Marketplace</a>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const apiUrl = getApiUrl();
+        const res = await fetch(`${apiUrl}/api/auctions/${auctionId}`);
+
+        // Check if response is valid JSON before parsing
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(`Auction ID (${auctionId}) not found on server or expired.`);
+        }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch item details');
+
+        const item = data.auction || data;
+        const img = item.imageUrl || 'https://via.placeholder.com/400x250?text=FUD+Campus+Item';
+
+        container.innerHTML = `
+          <img src="${img}" class="img-fluid rounded mb-3 w-100" style="height: 220px; object-fit: cover;" alt="${item.productTitle}">
+          
+          <span class="badge bg-light text-dark border mb-2">${item.category}</span>
+          <h3 class="fw-bold text-dark mb-1">${item.productTitle}</h3>
+          <p class="text-muted small mb-3">${item.description}</p>
+
+          <div class="card bg-light border-0 p-3 mb-4 rounded-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-muted d-block fw-bold">Current Highest Bid</small>
+                <span class="fs-3 fw-extrabold text-gold" id="livePrice">₦${(item.currentPrice || 0).toLocaleString()}</span>
+              </div>
+              <div class="text-end">
+                <small class="text-muted d-block fw-bold">Status</small>
+                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-danger'} p-2">${(item.status || 'ACTIVE').toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+
+          ${item.status === 'active' ? `
+            <form id="placeBidForm">
+              <div class="mb-3">
+                <label for="bidAmount" class="form-label fw-bold">Your Bid Amount (₦)</label>
+                <input type="number" class="form-control form-control-lg" id="bidAmount" min="${(item.currentPrice || 0) + 1}" value="${(item.currentPrice || 0) + 100}" required>
+                <div class="form-text">Must be higher than ₦${(item.currentPrice || 0).toLocaleString()}.</div>
+              </div>
+              <button type="submit" id="bidBtn" class="btn btn-gold btn-lg w-100 fw-bold shadow">
+                <i class="bi bi-gavel me-1"></i> Confirm & Submit Bid
+              </button>
+            </form>
+          ` : `
+            <div class="alert alert-warning text-center mb-0">
+              This auction has been completed or expired.
+            </div>
+          `}
+          
+          <a href="index.html" class="btn btn-outline-secondary w-100 mt-2">Back to Marketplace</a>
+        `;
+
+        const bidForm = document.getElementById('placeBidForm');
+        if (bidForm) bidForm.addEventListener('submit', handleBidSubmit);
+
+      } catch (err) {
+        console.error('Auction Details Error:', err);
+        container.innerHTML = `
+          <div class="text-center py-4">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-2 d-block"></i>
+            <h5 class="fw-bold text-dark">Error Loading Details</h5>
+            <p class="text-muted small">${err.message}</p>
+            <a href="index.html" class="btn btn-outline-primary btn-sm fw-bold">Return Home</a>
+          </div>
+        `;
+      }
+    }
+
+    async function handleBidSubmit(e) {
+      e.preventDefault();
+
+      const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
+      if (!token) {
+        if (typeof showToast === 'function') showToast('Please log in to place a bid.', 'danger');
+        setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+        return;
+      }
+
+      const bidAmount = parseFloat(document.getElementById('bidAmount').value);
+      const bidBtn = document.getElementById('bidBtn');
+
+      bidBtn.disabled = true;
+      bidBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Submitting Bid...`;
+
+      try {
+        const apiUrl = getApiUrl();
+        const res = await fetch(`${apiUrl}/api/auctions/bid`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ auctionId, bidAmount })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Bid submission failed');
+
+        if (typeof showToast === 'function') {
+          showToast('🎉 Bid Placed Successfully!', 'success');
+        } else {
+          alert('🎉 Bid Placed Successfully!');
+        }
+
+        loadAuctionDetails();
+
+      } catch (err) {
+        console.error('Bid Submit Error:', err);
+        if (typeof showToast === 'function') {
+          showToast(`Bid Error: ${err.message}`, 'danger');
+        } else {
+          alert(`Bid Error: ${err.message}`);
+        }
+        bidBtn.disabled = false;
+        bidBtn.innerHTML = `<i class="bi bi-gavel me-1"></i> Confirm & Submit Bid`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAuctionDetails();
+
+      if (typeof io !== 'undefined') {
+        try {
+          const socket = io();
+          socket.on('bidUpdated', (data) => {
+            if (data.auctionId === auctionId) {
+              const livePriceEl = document.getElementById('livePrice');
+              if (livePriceEl) {
+                livePriceEl.innerText = `₦${data.newPrice.toLocaleString()}`;
+                livePriceEl.classList.add('text-warning');
+                setTimeout(() => livePriceEl.classList.remove('text-warning'), 1500);
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('Socket warning:', e);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

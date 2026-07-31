@@ -1,0 +1,212 @@
+/* Federal University Dutse Branding Theme - Dark Green & Golden Yellow */
+:root {
+  --fud-green-dark: #0F2E1F;    /* Deep Forest Dark Green (Navbar, Dark Containers) */
+  --fud-green: #1B4332;         /* Core Dark Green */
+  --fud-green-mid: #2D6A4F;     /* Medium Dark Green */
+  --fud-green-light: #E8F2EC;   /* Subtle green tint for light elements */
+  
+  --fud-gold: #D4AF37;          /* Classic Rich Golden Yellow */
+  --fud-gold-bright: #E5A91A;   /* Vibrant Golden Yellow for highlights & badges */
+  --fud-gold-hover: #B59329;    /* Hover state for Golden Yellow */
+  --fud-gold-dark: #8C701E;     /* Darker Gold for text & borders */
+  --fud-gold-light: #FDF8E7;    /* Light Gold background tint */
+
+  --fud-bg: #F4F6F4;            /* Soft off-white page background */
+  --fud-card-border: #D8E3DC;
+  --fud-text: #16261C;
+}
+
+body {
+  background-color: var(--fud-bg) !important;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--fud-text);
+}
+
+/* Navbar Branding - Deep Dark Green with Golden Yellow Bottom Accent */
+.navbar-dark.bg-dark {
+  background-color: var(--fud-green-dark) !important;
+  border-bottom: 3px solid var(--fud-gold) !important;
+  box-shadow: 0 4px 12px rgba(15, 46, 31, 0.25);
+}
+
+.fud-logo-img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Headings - Dark Green */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--fud-green-dark);
+}
+
+/* Contrast overrides inside dark / green headers */
+.bg-dark h1, .bg-dark h2, .bg-dark h3, .bg-dark h4, .bg-dark h5, .bg-dark p, .bg-dark span,
+.bg-primary h1, .bg-primary h2, .bg-primary h3, .bg-primary h4, .bg-primary h5, .bg-primary p, .bg-primary span,
+.bg-fud-green h1, .bg-fud-green h2, .bg-fud-green h3, .bg-fud-green h4, .bg-fud-green h5,
+.hero-container h1, .hero-container h2, .hero-container h3, .hero-container p {
+  color: #FFFFFF !important;
+}
+
+/* Dark Green Utility Overrides */
+.text-fud-green, .text-primary, .text-success {
+  color: var(--fud-green) !important;
+}
+
+.bg-fud-green, .bg-primary, .bg-success {
+  background-color: var(--fud-green) !important;
+  color: #FFFFFF !important;
+}
+
+.border-fud-green, .border-primary, .border-success {
+  border-color: var(--fud-green) !important;
+}
+
+/* Golden Yellow Utility Overrides */
+.text-gold, .text-warning {
+  color: var(--fud-gold-bright) !important;
+}
+
+.bg-gold, .bg-warning {
+  background-color: var(--fud-gold) !important;
+  color: var(--fud-green-dark) !important;
+}
+
+.border-gold, .border-warning {
+  border-color: var(--fud-gold) !important;
+}
+
+/* Buttons - Golden Yellow Action Buttons (High Impact) */
+.btn-primary, .btn-warning, .btn-gold {
+  background-color: var(--fud-gold) !important;
+  border-color: var(--fud-gold) !important;
+  color: var(--fud-green-dark) !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover, .btn-primary:focus,
+.btn-warning:hover, .btn-warning:focus,
+.btn-gold:hover, .btn-gold:focus {
+  background-color: var(--fud-gold-hover) !important;
+  border-color: var(--fud-gold-hover) !important;
+  color: var(--fud-green-dark) !important;
+  box-shadow: 0 4px 10px rgba(181, 147, 41, 0.35);
+}
+
+/* Secondary Action / Dark Green Buttons */
+.btn-success, .btn-fud-green {
+  background-color: var(--fud-green) !important;
+  border-color: var(--fud-green) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+.btn-success:hover, .btn-success:focus,
+.btn-fud-green:hover, .btn-fud-green:focus {
+  background-color: var(--fud-green-dark) !important;
+  border-color: var(--fud-green-dark) !important;
+  color: #FFFFFF !important;
+}
+
+/* Outline Buttons */
+.btn-outline-primary, .btn-outline-success {
+  color: var(--fud-green) !important;
+  border-color: var(--fud-green) !important;
+}
+
+.btn-outline-primary:hover, .btn-outline-success:hover {
+  background-color: var(--fud-green) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-outline-warning, .btn-outline-gold {
+  color: var(--fud-gold-dark) !important;
+  border-color: var(--fud-gold) !important;
+}
+
+.btn-outline-warning:hover, .btn-outline-gold:hover {
+  background-color: var(--fud-gold) !important;
+  color: var(--fud-green-dark) !important;
+}
+
+.btn-outline-light {
+  color: var(--fud-gold) !important;
+  border-color: var(--fud-gold) !important;
+}
+
+.btn-outline-light:hover {
+  background-color: var(--fud-gold) !important;
+  color: var(--fud-green-dark) !important;
+}
+
+/* Hero Section */
+.hero-container {
+  background: linear-gradient(135deg, var(--fud-green) 0%, var(--fud-green-dark) 100%);
+  border-radius: 16px;
+  border-bottom: 4px solid var(--fud-gold);
+  color: #FFFFFF !important;
+}
+
+/* Card Styling */
+.card {
+  border: 1px solid var(--fud-card-border) !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(15, 46, 31, 0.04);
+}
+
+.card-header.bg-primary {
+  background-color: var(--fud-green-dark) !important;
+  color: #FFFFFF !important;
+  border-bottom: 3px solid var(--fud-gold) !important;
+}
+
+/* Badges */
+.badge.bg-primary, .badge.bg-success {
+  background-color: var(--fud-green) !important;
+  color: #FFFFFF !important;
+}
+
+.badge.bg-warning, .badge.bg-gold {
+  background-color: var(--fud-gold) !important;
+  color: var(--fud-green-dark) !important;
+  font-weight: 700;
+}
+
+.badge.bg-light {
+  background-color: var(--fud-green-light) !important;
+  color: var(--fud-green-dark) !important;
+  border: 1px solid var(--fud-card-border) !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--fud-green-dark) !important;
+  color: #FFFFFF !important;
+}
+
+/* Form Controls & Inputs */
+.form-control:focus, .form-select:focus {
+  border-color: var(--fud-gold) !important;
+  box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25) !important;
+}
+
+/* Code & Exchange Pass Tags */
+code {
+  color: var(--fud-green-dark) !important;
+  background-color: var(--fud-gold-light) !important;
+  border: 1px solid var(--fud-gold) !important;
+}
+
+/* Links */
+a.text-primary, a.text-decoration-none.text-primary, .alert-link {
+  color: var(--fud-green) !important;
+}
+
+a.text-primary:hover {
+  color: var(--fud-green-dark) !important;
+}
+
+/* Spinners */
+.spinner-border.text-primary {
+  color: var(--fud-gold) !important;
+}

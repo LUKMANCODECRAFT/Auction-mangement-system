@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Listing - Federal University Dutse Marketplace</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
+      </a>
+      <div class="ms-auto d-flex align-items-center" id="navAuthActions"></div>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-7">
+        <div class="card border-0 shadow-lg rounded-3">
+          <div class="card-body p-4 p-md-5">
+            <h3 class="fw-bold text-dark text-center mb-1">Post Item on Campus Marketplace</h3>
+            <p class="text-muted text-center mb-4 small">Set your starting price and auction duration for campus bidders.</p>
+
+            <form id="createListingForm">
+              <div class="mb-3">
+                <label for="productTitle" class="form-label fw-bold">Item Title</label>
+                <input type="text" class="form-control" id="productTitle" placeholder="e.g. Dell Core i5 Laptop / Engineering Textbook" required>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="category" class="form-label fw-bold">Category</label>
+                  <select class="form-select" id="category" required>
+                    <option value="" disabled selected>Select category</option>
+                    <option value="Academic Books">Academic Books</option>
+                    <option value="Electronics & Hardware">Electronics & Hardware</option>
+                    <option value="Vehicles & Cycles">Vehicles & Cycles</option>
+                    <option value="Hostel Gear">Hostel Gear</option>
+                    <option value="Fashion & Accessories">Fashion & Accessories</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="startingPrice" class="form-label fw-bold">Starting Price (₦)</label>
+                  <input type="number" class="form-control" id="startingPrice" placeholder="2000" min="100" required>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="durationHours" class="form-label fw-bold">Auction Duration (Hours)</label>
+                  <input type="number" step="0.01" class="form-control" id="durationHours" value="24" required>
+                  <div class="form-text">Tip: Use <code>0.02</code> (~1 min) for live expiration testing.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="imageUrl" class="form-label fw-bold">Product Image URL (Optional)</label>
+                  <input type="url" class="form-control" id="imageUrl" placeholder="https://...">
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="description" class="form-label fw-bold">Item Description & Condition</label>
+                <textarea class="form-control" id="description" rows="3" placeholder="Provide details about hostel pickup location, item working condition, etc." required></textarea>
+              </div>
+
+              <button type="submit" id="submitBtn" class="btn btn-gold btn-lg w-100 fw-bold mb-2">
+                <i class="bi bi-check-circle me-1"></i> Publish Auction Listing
+              </button>
+              <a href="index.html" class="btn btn-outline-secondary w-100">Cancel</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const getApiUrl = () => {
+      return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? 'http://localhost:5000'
+        : window.location.origin;
+    };
+
+    const form = document.getElementById('createListingForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        // 1. Prevent default browser form refresh immediately
+        e.preventDefault();
+
+        // 2. Safely check token
+        const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
+        if (!token) {
+          alert('You must be logged in to post an item.');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // 3. Collect values
+        const productTitle = document.getElementById('productTitle').value.trim();
+        const category = document.getElementById('category').value;
+        const startingPrice = parseFloat(document.getElementById('startingPrice').value);
+        const durationHours = parseFloat(document.getElementById('durationHours').value);
+        const imageUrl = document.getElementById('imageUrl').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        // Disable button during network call
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Publishing...`;
+
+        try {
+          const apiUrl = getApiUrl();
+          const res = await fetch(`${apiUrl}/api/auctions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              productTitle,
+              category,
+              startingPrice,
+              durationHours,
+              imageUrl: imageUrl || undefined,
+              description
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || 'Failed to create auction');
+          }
+
+          if (typeof showToast === 'function') {
+            showToast('🎉 Listing Published Successfully!', 'success');
+          } else {
+            alert('🎉 Listing Published Successfully!');
+          }
+
+          // Redirect to main page after creation
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1000);
+
+        } catch (err) {
+          console.error('Publish Error:', err);
+          if (typeof showToast === 'function') {
+            showToast(`Listing Error: ${err.message}`, 'danger');
+          } else {
+            alert(`Listing Error: ${err.message}`);
+          }
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Publish Auction Listing`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

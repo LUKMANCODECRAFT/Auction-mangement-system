@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Federal University Dutse Marketplace</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
+      </a>
+      <a href="index.html" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left me-1"></i> Marketplace</a>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-7 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-3">
+          <div class="card-body p-4 p-md-5">
+            <h3 class="fw-bold text-dark text-center mb-1">Create Account</h3>
+            <p class="text-muted text-center mb-4 small">Join the FUD campus marketplace to bid or sell items.</p>
+
+            <form id="registerForm">
+              <div class="mb-3">
+                <label for="regFullName" class="form-label fw-bold">Full Name</label>
+                <input type="text" class="form-control" id="regFullName" placeholder="e.g. Ibrahim Abubakar" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="regEmail" class="form-label fw-bold">Email Address</label>
+                <input type="email" class="form-control" id="regEmail" placeholder="student@fud.edu.ng" required>
+              </div>
+
+              <!-- Password Field with Toggle Eye -->
+              <div class="mb-2">
+                <label for="regPassword" class="form-label fw-bold">Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="regPassword" placeholder="••••••••" required>
+                  <button class="btn btn-outline-secondary" type="button" id="toggleRegPass">
+                    <i class="bi bi-eye-slash" id="regEyeIcon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Live Strength Bar & Suggestion Label -->
+              <div class="mb-3">
+                <div class="progress mb-1" style="height: 6px;">
+                  <div id="strengthBar" class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small id="strengthText" class="fw-bold text-muted" style="font-size: 0.78rem;">Strength: Enter password</small>
+              </div>
+
+              <!-- Confirm Password Field -->
+              <div class="mb-3">
+                <label for="regConfirmPassword" class="form-label fw-bold">Confirm Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="regConfirmPassword" placeholder="••••••••" required>
+                  <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPass">
+                    <i class="bi bi-eye-slash" id="confirmEyeIcon"></i>
+                  </button>
+                </div>
+                <div id="matchError" class="small text-danger mt-1 d-none fw-bold">
+                  <i class="bi bi-x-circle me-1"></i> Passwords do not match!
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="regRole" class="form-label fw-bold">Account Role</label>
+                <select class="form-select" id="regRole" required>
+                  <option value="bidder" selected>Bidder (Buy & Bid on Campus Assets)</option>
+                  <option value="seller">Seller (List Campus Items for Auction)</option>
+                </select>
+              </div>
+
+              <button type="submit" id="regSubmitBtn" class="btn btn-gold btn-lg w-100 fw-bold mb-3">
+                Create Account
+              </button>
+
+              <div class="text-center">
+                <small class="text-muted">Already have an account? <a href="login.html" class="fw-bold text-decoration-none">Sign In Here</a></small>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Toggle Password Eyes
+    function setupToggle(buttonId, inputId, iconId) {
+      document.getElementById(buttonId).addEventListener('click', function() {
+        const passInput = document.getElementById(inputId);
+        const eyeIcon = document.getElementById(iconId);
+        if (passInput.type === 'password') {
+          passInput.type = 'text';
+          eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+        } else {
+          passInput.type = 'password';
+          eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+        }
+      });
+    }
+
+    setupToggle('toggleRegPass', 'regPassword', 'regEyeIcon');
+    setupToggle('toggleConfirmPass', 'regConfirmPassword', 'confirmEyeIcon');
+
+    // Live Password Strength Meter
+    const passInput = document.getElementById('regPassword');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    const confirmInput = document.getElementById('regConfirmPassword');
+    const matchError = document.getElementById('matchError');
+    const submitBtn = document.getElementById('regSubmitBtn');
+
+    passInput.addEventListener('input', () => {
+      const val = passInput.value;
+      let score = 0;
+
+      if (val.length >= 6) score += 25;
+      if (val.length >= 10) score += 25;
+      if (/[A-Z]/.test(val)) score += 20;
+      if (/[0-9]/.test(val)) score += 15;
+      if (/[^A-Za-z0-9]/.test(val)) score += 15;
+
+      strengthBar.style.width = score + '%';
+
+      if (val.length === 0) {
+        strengthBar.className = 'progress-bar bg-danger';
+        strengthText.innerText = 'Strength: Enter password';
+        strengthText.className = 'fw-bold text-muted';
+      } else if (score < 40) {
+        strengthBar.className = 'progress-bar bg-danger';
+        strengthText.innerText = 'Strength: Weak (Use letters, numbers & length)';
+        strengthText.className = 'fw-bold text-danger';
+      } else if (score < 75) {
+        strengthBar.className = 'progress-bar bg-warning';
+        strengthText.innerText = 'Strength: Medium (Good, try adding special symbols)';
+        strengthText.className = 'fw-bold text-warning';
+      } else {
+        strengthBar.className = 'progress-bar bg-success';
+        strengthText.innerText = 'Strength: Strong (Great password!)';
+        strengthText.className = 'fw-bold text-success';
+      }
+
+      validateMatch();
+    });
+
+    confirmInput.addEventListener('input', validateMatch);
+
+    function validateMatch() {
+      if (confirmInput.value.length > 0 && passInput.value !== confirmInput.value) {
+        matchError.classList.remove('d-none');
+        submitBtn.disabled = true;
+      } else {
+        matchError.classList.add('d-none');
+        submitBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

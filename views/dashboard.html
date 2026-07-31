@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard - Federal University Dutse Marketplace</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
+      </a>
+      <div>
+        <a href="index.html" class="btn btn-outline-light btn-sm fw-bold">
+          <i class="bi bi-arrow-left me-1"></i> Back to Marketplace
+        </a></div>
+      <div class="ms-auto d-flex align-items-center" id="navAuthActions"></div>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    
+    <!-- Welcome Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h2 class="fw-bold text-dark mb-1">Welcome, <span id="dashUserName">User</span></h2>
+        <p class="text-muted mb-0 small">Manage your listed items, winning bids, and campus exchange passes.</p>
+      </div>
+      <a href="create-listing.html" class="btn btn-primary btn-lg fw-bold shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> + Create New Listing
+      </a>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
+          <small class="text-muted fw-bold d-block mb-1">Virtual Wallet Balance</small>
+          <span class="fs-2 fw-extrabold text-gold" id="dashWalletBalance">₦0</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
+          <small class="text-muted fw-bold d-block mb-1">Active Placed Bids</small>
+          <span class="fs-2 fw-extrabold text-gold" id="dashActiveBidsCount">0</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
+          <small class="text-muted fw-bold d-block mb-1">My Listed Items</small>
+          <span class="fs-2 fw-extrabold text-fud-green" id="dashListedItemsCount">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Listings Table Card -->
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+      <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam text-warning me-2"></i> My Item Listings, Winners & Exchange Passes</h5>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadDashboardData()">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">Item Title</th>
+              <th scope="col">Category</th>
+              <th scope="col">Current / Final Price</th>
+              <th scope="col">Status</th>
+              <th scope="col">Winning Bidder</th>
+              <th scope="col" class="pe-4">Exchange Pass Code</th>
+            </tr>
+          </thead>
+          <tbody id="userListingsTable">
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">Loading your listings...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const getApiUrl = () => {
+      return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? 'http://localhost:5000'
+        : window.location.origin;
+    };
+
+    async function loadDashboardData() {
+      const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
+      const user = typeof getUser === 'function' ? getUser() : JSON.parse(localStorage.getItem('fud_user') || '{}');
+
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Populate User Header
+      if (user && user.fullName) {
+        document.getElementById('dashUserName').innerText = user.fullName;
+        document.getElementById('dashWalletBalance').innerText = `₦${(user.walletBalance || 0).toLocaleString()}`;
+      }
+
+      const tableBody = document.getElementById('userListingsTable');
+
+      try {
+        const apiUrl = getApiUrl();
+        const res = await fetch(`${apiUrl}/api/auctions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to load user auctions');
+
+        const allAuctions = data.auctions || [];
+        
+        // Filter listings created by the logged-in user
+        const myListings = allAuctions.filter(a => {
+          const sellerId = a.seller._id || a.seller;
+          return sellerId === user._id || sellerId === user.id;
+        });
+
+        // Calculate count of active bids placed by this user across all listings
+        let myPlacedBidsCount = 0;
+        allAuctions.forEach(auction => {
+          if (Array.isArray(auction.bids)) {
+            const hasBid = auction.bids.some(b => {
+              const bidderId = b.bidder._id || b.bidder;
+              return bidderId === user._id || bidderId === user.id;
+            });
+            if (hasBid) myPlacedBidsCount++;
+          }
+        });
+
+        // Update Stat Counters
+        document.getElementById('dashListedItemsCount').innerText = myListings.length;
+        document.getElementById('dashActiveBidsCount').innerText = myPlacedBidsCount;
+
+        if (myListings.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
+                <h6 class="fw-bold text-dark mb-1">No Listings Found</h6>
+                <p class="text-muted small mb-3">You haven't posted any items for auction yet.</p>
+                <a href="create-listing.html" class="btn btn-primary btn-sm fw-bold">+ Post Your First Item</a>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tableBody.innerHTML = '';
+        myListings.forEach(item => {
+          const winner = item.winner ? (item.winner.fullName || 'Winner Assigned') : (item.bids && item.bids.length > 0 ? 'Leading Bids' : 'No Bids Yet');
+          const exchangePass = item.exchangePassCode || (item.status === 'completed' ? 'FUD-PASS-EXCHANGE' : 'Pending Completion');
+
+          tableBody.innerHTML += `
+            <tr>
+              <td class="ps-4 fw-bold text-dark">${item.productTitle}</td>
+              <td><span class="badge bg-light text-dark border">${item.category}</span></td>
+              <td class="fw-bold text-success">₦${(item.currentPrice || 0).toLocaleString()}</td>
+              <td>
+                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'} px-2 py-1">
+                  ${(item.status || 'ACTIVE').toUpperCase()}
+                </span>
+              </td>
+              <td class="small text-muted">${winner}</td>
+              <td class="pe-4">
+                <code class="bg-light px-2 py-1 rounded text-primary fw-bold">${exchangePass}</code>
+              </td>
+            </tr>
+          `;
+        });
+
+      } catch (err) {
+        console.error('Dashboard Load Error:', err);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4 text-danger">
+              <i class="bi bi-exclamation-triangle me-1"></i> ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboardData();
+    });
+  </script>
+</body>
+</html>

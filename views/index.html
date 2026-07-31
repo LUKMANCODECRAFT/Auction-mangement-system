@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Federal University Dutse Marketplace</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
+      </a>
+      <div class="ms-auto d-flex align-items-center" id="navAuthActions">
+        <a href="login.html" class="btn btn-outline-light btn-sm me-2">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm fw-bold">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+
+    <!-- Hero Banner -->
+    <div class="card border-0 shadow-sm p-4 p-md-5 rounded-4 mb-4 text-center text-white" style="background: linear-gradient(135deg, #1B4332 0%, #0F2E1F 100%); border-bottom: 4px solid #D4AF37;">
+      <div class="py-2">
+        <span class="badge bg-warning px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm">
+          <i class="bi bi-mortarboard-fill me-1"></i> Federal University Dutse Campus Marketplace
+        </span>
+        <h1 class="display-5 fw-extrabold text-white mb-3">Buy, Sell & Auction Campus Assets</h1>
+        <p class="lead text-light mb-4 mx-auto" style="max-width: 650px; opacity: 0.95;">
+          Trade hostel gear, textbooks, and electronics securely with verified Exchange Pass Codes.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+          <a href="dashboard.html" class="btn btn-gold btn-lg fw-bold px-4 shadow">
+            <i class="bi bi-speedometer2 me-1"></i> My Dashboard
+          </a>
+          <a href="create-listing.html" class="btn btn-outline-light btn-lg fw-bold px-4">
+            <i class="bi bi-plus-circle me-1"></i> + Post New Listing
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Category Filters -->
+    <div class="card border-0 shadow-sm p-3 mb-4 rounded-3 bg-white">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="searchInput" class="form-control bg-light border-start-0" placeholder="Search campus items by title or keywords..." oninput="filterListings()">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <select id="categoryFilter" class="form-select bg-light fw-bold" onchange="filterListings()">
+            <option value="ALL" selected>All Categories</option>
+            <option value="Academic Books">Academic Books & Notes</option>
+            <option value="Hostel & Room Appliances">Hostel & Room Appliances</option>
+            <option value="Electronics & Hardware">Electronics & Gadgets</option>
+            <option value="Vehicles & Cycles">Vehicles & Bicycles</option>
+            <option value="Fashion & Accessories">Fashion & Accessories</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Active Campus Auctions</h3>
+        <small class="text-muted">Real-time bids updating live via WebSockets</small>
+      </div>
+      <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill" onclick="loadAuctions()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Listings
+      </button>
+    </div>
+
+    <!-- Listings Container Grid -->
+    <div class="row g-4" id="auctionListingsContainer">
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2">Loading campus auctions...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
+  
+  <script>
+    let globalActiveAuctions = [];
+
+    const getApiUrl = () => {
+      return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? 'http://localhost:5000'
+        : window.location.origin;
+    };
+
+    function calculateTimeRemaining(createdAt, durationHours) {
+      const createdDate = createdAt ? new Date(createdAt).getTime() : new Date().getTime();
+      const validDuration = parseFloat(durationHours) || 24;
+      const endTime = createdDate + (validDuration * 60 * 60 * 1000);
+      const now = new Date().getTime();
+      const diff = endTime - now;
+
+      if (diff <= 0) return { expired: true, text: 'Auction Ended' };
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      return {
+        expired: false,
+        text: `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`
+      };
+    }
+
+    async function loadAuctions() {
+      const container = document.getElementById('auctionListingsContainer');
+      if (!container) return;
+
+      try {
+        const apiUrl = getApiUrl();
+        const res = await fetch(`${apiUrl}/api/auctions`);
+        if (!res.ok) throw new Error(`Server status ${res.status}`);
+
+        const data = await res.json();
+        globalActiveAuctions = (data.auctions || []).filter(a => a.status === 'active');
+
+        filterListings();
+      } catch (err) {
+        console.error('Auction Fetch Error:', err);
+        container.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <i class="bi bi-exclamation-triangle-fill fs-2 text-warning mb-2 d-block"></i>
+            <h5 class="fw-bold text-dark">Unable to Load Auctions</h5>
+            <p class="text-muted small">${err.message}</p>
+            <button class="btn btn-outline-primary btn-sm fw-bold" onclick="loadAuctions()">Try Again</button>
+          </div>
+        `;
+      }
+    }
+
+    function filterListings() {
+      const container = document.getElementById('auctionListingsContainer');
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+      const selectedCategory = document.getElementById('categoryFilter').value;
+
+      const filtered = globalActiveAuctions.filter(item => {
+        const matchesSearch = item.productTitle.toLowerCase().includes(searchQuery) ||
+                              (item.description && item.description.toLowerCase().includes(searchQuery));
+        const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <i class="bi bi-search fs-1 text-muted mb-2 d-block"></i>
+            <h5 class="fw-bold text-dark">No Matching Listings Found</h5>
+            <p class="text-muted small">Try adjusting your search query or category filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      filtered.forEach(item => {
+        const img = item.imageUrl || 'https://via.placeholder.com/400x250?text=FUD+Campus+Item';
+        const timer = calculateTimeRemaining(item.createdAt, item.durationHours);
+
+        container.innerHTML += `
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden position-relative">
+              <div class="position-relative">
+                <img src="${img}" class="card-img-top" alt="${item.productTitle}" style="height: 200px; object-fit: cover;">
+                <span class="position-absolute top-0 end-0 ${timer.expired ? 'bg-danger' : 'bg-dark'} text-warning p-2 m-2 rounded-3 small fw-bold shadow">
+                  <i class="bi bi-clock-history me-1"></i> <span id="timer-${item._id}">${timer.text}</span>
+                </span>
+              </div>
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-light text-dark border">${item.category}</span>
+                  <span class="badge bg-success p-2">ACTIVE</span>
+                </div>
+                <h5 class="card-title fw-bold text-dark mb-2">${item.productTitle}</h5>
+                <p class="card-text text-muted small text-truncate mb-3">${item.description}</p>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <div>
+                    <small class="text-muted d-block">Current Price</small>
+                    <span class="fs-5 fw-bold text-success" id="price-${item._id}">₦${(item.currentPrice || 0).toLocaleString()}</span>
+                  </div>
+                  <a href="place-bid.html?id=${item._id}" class="btn btn-primary fw-bold shadow-sm">
+                    <i class="bi bi-gavel me-1"></i> Place Bid
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAuctions();
+
+      setInterval(() => {
+        if (!globalActiveAuctions.length) return;
+        globalActiveAuctions.forEach(item => {
+          const timerEl = document.getElementById(`timer-${item._id}`);
+          if (timerEl) {
+            const timer = calculateTimeRemaining(item.createdAt, item.durationHours);
+            timerEl.innerText = timer.text;
+          }
+        });
+      }, 1000);
+
+      if (typeof io !== 'undefined') {
+        try {
+          const socket = io();
+          socket.on('bidUpdated', (data) => {
+            const priceEl = document.getElementById(`price-${data.auctionId}`);
+            if (priceEl) {
+              priceEl.innerText = `₦${data.newPrice.toLocaleString()}`;
+              priceEl.classList.add('text-warning');
+              setTimeout(() => priceEl.classList.remove('text-warning'), 1500);
+            }
+          });
+        } catch (e) {
+          console.warn('Socket warning:', e);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
