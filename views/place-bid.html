@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">
@@ -19,13 +20,13 @@
     </div>
   </nav>
 
-  <div class="container py-5">
+  <main class="container py-5 flex-grow-1">
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
         <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
           <div class="card-header bg-primary text-white p-4">
-            <h4 class="fw-bold mb-0"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Submit Live Bid</h4>
-            <small class="opacity-75">Compete in real-time for campus assets.</small>
+            <h4 class="fw-bold mb-0 text-white"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Submit Live Campus Bid</h4>
+            <small class="opacity-90">Compete in real-time for verified campus assets.</small>
           </div>
 
           <div class="card-body p-4" id="bidContainer">
@@ -37,7 +38,29 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="fud-footer py-4 mt-5">
+    <div class="container text-center text-md-start">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace</h5>
+          <p class="small mb-0 text-light opacity-75">Peer-to-peer campus marketplace & auction ecosystem.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="index.html" class="me-3 small">Marketplace</a>
+          <a href="dashboard.html" class="me-3 small">Dashboard</a>
+          <a href="create-listing.html" class="me-3 small">Create Listing</a>
+          <a href="notifications.html" class="small">Notifications</a>
+        </div>
+      </div>
+      <hr class="my-3 border-secondary opacity-25">
+      <div class="text-center small opacity-75">
+        &copy; 2026 Federal University Dutse. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -68,7 +91,6 @@
         const apiUrl = getApiUrl();
         const res = await fetch(`${apiUrl}/api/auctions/${auctionId}`);
 
-        // Check if response is valid JSON before parsing
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           throw new Error(`Auction ID (${auctionId}) not found on server or expired.`);
@@ -79,11 +101,16 @@
 
         const item = data.auction || data;
         const img = item.imageUrl || 'https://via.placeholder.com/400x250?text=FUD+Campus+Item';
+        const sellerName = item.seller && item.seller.fullName ? item.seller.fullName : 'Campus Seller';
 
         container.innerHTML = `
-          <img src="${img}" class="img-fluid rounded mb-3 w-100" style="height: 220px; object-fit: cover;" alt="${item.productTitle}">
+          <img src="${img}" class="img-fluid rounded mb-3 w-100 shadow-sm" style="height: 230px; object-fit: cover;" alt="${item.productTitle}">
           
-          <span class="badge bg-light text-dark border mb-2">${item.category}</span>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-light text-dark border">${item.category}</span>
+            <span class="badge bg-secondary">Seller: ${sellerName}</span>
+          </div>
+
           <h3 class="fw-bold text-dark mb-1">${item.productTitle}</h3>
           <p class="text-muted small mb-3">${item.description}</p>
 
@@ -91,11 +118,11 @@
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <small class="text-muted d-block fw-bold">Current Highest Bid</small>
-                <span class="fs-3 fw-extrabold text-gold" id="livePrice">₦${(item.currentPrice || 0).toLocaleString()}</span>
+                <span class="fs-2 fw-extrabold text-success" id="livePrice">₦${(item.currentPrice || 0).toLocaleString()}</span>
               </div>
               <div class="text-end">
-                <small class="text-muted d-block fw-bold">Status</small>
-                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-danger'} p-2">${(item.status || 'ACTIVE').toUpperCase()}</span>
+                <small class="text-muted d-block fw-bold">Auction Status</small>
+                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-danger'} p-2 fs-6">${(item.status || 'ACTIVE').toUpperCase()}</span>
               </div>
             </div>
           </div>
@@ -104,20 +131,29 @@
             <form id="placeBidForm">
               <div class="mb-3">
                 <label for="bidAmount" class="form-label fw-bold">Your Bid Amount (₦)</label>
-                <input type="number" class="form-control form-control-lg" id="bidAmount" min="${(item.currentPrice || 0) + 1}" value="${(item.currentPrice || 0) + 100}" required>
+                <input type="number" class="form-control form-control-lg fw-bold text-dark" id="bidAmount" min="${(item.currentPrice || 0) + 1}" value="${(item.currentPrice || 0) + 100}" required>
                 <div class="form-text">Must be higher than ₦${(item.currentPrice || 0).toLocaleString()}.</div>
               </div>
-              <button type="submit" id="bidBtn" class="btn btn-gold btn-lg w-100 fw-bold shadow">
-                <i class="bi bi-gavel me-1"></i> Confirm & Submit Bid
+
+              <!-- Quick Increment Presets -->
+              <div class="d-flex gap-2 mb-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="addBidIncrement(100)">+ ₦100</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="addBidIncrement(500)">+ ₦500</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="addBidIncrement(1000)">+ ₦1,000</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="addBidIncrement(5000)">+ ₦5,000</button>
+              </div>
+
+              <button type="submit" id="bidBtn" class="btn btn-gold btn-lg w-100 fw-bold shadow mb-2">
+                <i class="bi bi-gavel me-1"></i> Confirm & Submit Live Bid
               </button>
             </form>
           ` : `
-            <div class="alert alert-warning text-center mb-0">
-              This auction has been completed or expired.
+            <div class="alert alert-warning text-center mb-3">
+              This auction has been completed or settled.
             </div>
           `}
           
-          <a href="index.html" class="btn btn-outline-secondary w-100 mt-2">Back to Marketplace</a>
+          <a href="index.html" class="btn btn-outline-secondary w-100 fw-bold">Back to Marketplace</a>
         `;
 
         const bidForm = document.getElementById('placeBidForm');
@@ -133,6 +169,14 @@
             <a href="index.html" class="btn btn-outline-primary btn-sm fw-bold">Return Home</a>
           </div>
         `;
+      }
+    }
+
+    function addBidIncrement(amount) {
+      const bidInput = document.getElementById('bidAmount');
+      if (bidInput) {
+        const currentVal = parseFloat(bidInput.value) || 0;
+        bidInput.value = currentVal + amount;
       }
     }
 
@@ -182,7 +226,7 @@
           alert(`Bid Error: ${err.message}`);
         }
         bidBtn.disabled = false;
-        bidBtn.innerHTML = `<i class="bi bi-gavel me-1"></i> Confirm & Submit Bid`;
+        bidBtn.innerHTML = `<i class="bi bi-gavel me-1"></i> Confirm & Submit Live Bid`;
       }
     }
 
@@ -191,7 +235,7 @@
 
       if (typeof io !== 'undefined') {
         try {
-          const socket = io();
+          const socket = io(getApiUrl());
           socket.on('bidUpdated', (data) => {
             if (data.auctionId === auctionId) {
               const livePriceEl = document.getElementById('livePrice');

@@ -115,7 +115,63 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Force reset/seed admin account directly in MongoDB Atlas
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email and new password are required' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No account registered with this email address' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: '🎉 Password reset successfully! You can now log in with your new password.'
+    });
+  } catch (error) {
+    console.error('Error in resetPassword:', error.message);
+    res.status(500).json({ success: false, message: 'Server error resetting password' });
+  }
+};
+
+// @desc    Self Top-Up Virtual Wallet (For Testing & Demo)
+// @route   POST /api/auth/topup
+// @access  Private
+exports.topupSelfWallet = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const topupAmount = parseFloat(amount) || 50000;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.walletBalance = (user.walletBalance || 0) + topupAmount;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `🎉 Virtual wallet credited with ₦${topupAmount.toLocaleString()}!`,
+      newBalance: user.walletBalance
+    });
+  } catch (error) {
+    console.error('Error in topupSelfWallet:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to credit wallet' });
+  }
+};
+
+// @desc    Force reset/seed admin account
 // @route   GET/POST /api/auth/seed-admin
 // @access  Public
 exports.seedAdmin = async (req, res) => {

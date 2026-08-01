@@ -1,9 +1,9 @@
 /* Federal University Dutse Branding Theme - Dark Green & Golden Yellow */
 :root {
-  --fud-green-dark: #0F2E1F;    /* Deep Forest Dark Green (Navbar, Dark Containers) */
+  --fud-green-dark: #0F2E1F;    /* Deep Forest Dark Green (Navbar, Dark Containers, Header) */
   --fud-green: #1B4332;         /* Core Dark Green */
   --fud-green-mid: #2D6A4F;     /* Medium Dark Green */
-  --fud-green-light: #E8F2EC;   /* Subtle green tint for light elements */
+  --fud-green-light: #E8F2EC;   /* Light green background tint */
   
   --fud-gold: #D4AF37;          /* Classic Rich Golden Yellow */
   --fud-gold-bright: #E5A91A;   /* Vibrant Golden Yellow for highlights & badges */
@@ -11,7 +11,7 @@
   --fud-gold-dark: #8C701E;     /* Darker Gold for text & borders */
   --fud-gold-light: #FDF8E7;    /* Light Gold background tint */
 
-  --fud-bg: #F4F6F4;            /* Soft off-white page background */
+  --fud-bg: #F4F7F5;            /* Soft clean background */
   --fud-card-border: #D8E3DC;
   --fud-text: #16261C;
 }
@@ -20,19 +20,44 @@ body {
   background-color: var(--fud-bg) !important;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: var(--fud-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Navbar Branding - Deep Dark Green with Golden Yellow Bottom Accent */
+main, .container {
+  flex: 1 0 auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #E8F2EC;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--fud-green-mid);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fud-green);
+}
+
+/* Navbar Branding - Deep Dark Green with Golden Accent Line */
 .navbar-dark.bg-dark {
   background-color: var(--fud-green-dark) !important;
-  border-bottom: 3px solid var(--fud-gold) !important;
-  box-shadow: 0 4px 12px rgba(15, 46, 31, 0.25);
+  border-bottom: 3.5px solid var(--fud-gold) !important;
+  box-shadow: 0 4px 16px rgba(15, 46, 31, 0.3);
 }
 
-.fud-logo-img {
-  height: 38px;
-  width: auto;
-  object-fit: contain;
+.navbar-brand {
+  color: #FFFFFF !important;
+  letter-spacing: 0.3px;
+}
+
+.navbar-brand i {
+  color: var(--fud-gold-bright) !important;
 }
 
 /* Headings - Dark Green */
@@ -53,17 +78,21 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--fud-green) !important;
 }
 
-.bg-fud-green, .bg-primary, .bg-success {
+.bg-fud-green, .bg-primary {
   background-color: var(--fud-green) !important;
   color: #FFFFFF !important;
 }
 
-.border-fud-green, .border-primary, .border-success {
+.border-fud-green, .border-primary {
   border-color: var(--fud-green) !important;
 }
 
 /* Golden Yellow Utility Overrides */
 .text-gold, .text-warning {
+  color: var(--fud-gold-dark) !important;
+}
+
+.text-gold-bright {
   color: var(--fud-gold-bright) !important;
 }
 
@@ -76,13 +105,14 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--fud-gold) !important;
 }
 
-/* Buttons - Golden Yellow Action Buttons (High Impact) */
+/* Buttons - Golden Yellow Primary Actions */
 .btn-primary, .btn-warning, .btn-gold {
   background-color: var(--fud-gold) !important;
   border-color: var(--fud-gold) !important;
   color: var(--fud-green-dark) !important;
   font-weight: 700 !important;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.25);
 }
 
 .btn-primary:hover, .btn-primary:focus,
@@ -91,7 +121,8 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--fud-gold-hover) !important;
   border-color: var(--fud-gold-hover) !important;
   color: var(--fud-green-dark) !important;
-  box-shadow: 0 4px 10px rgba(181, 147, 41, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(181, 147, 41, 0.4);
 }
 
 /* Secondary Action / Dark Green Buttons */
@@ -100,6 +131,7 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--fud-green) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
+  transition: all 0.25s ease-in-out;
 }
 
 .btn-success:hover, .btn-success:focus,
@@ -107,6 +139,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--fud-green-dark) !important;
   border-color: var(--fud-green-dark) !important;
   color: #FFFFFF !important;
+  transform: translateY(-1px);
 }
 
 /* Outline Buttons */
@@ -131,7 +164,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-outline-light {
-  color: var(--fud-gold) !important;
+  color: var(--fud-gold-bright) !important;
   border-color: var(--fud-gold) !important;
 }
 
@@ -140,22 +173,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--fud-green-dark) !important;
 }
 
-/* Hero Section */
-.hero-container {
-  background: linear-gradient(135deg, var(--fud-green) 0%, var(--fud-green-dark) 100%);
-  border-radius: 16px;
-  border-bottom: 4px solid var(--fud-gold);
-  color: #FFFFFF !important;
-}
-
-/* Card Styling */
+/* Cards & Elevated Containers */
 .card {
   border: 1px solid var(--fud-card-border) !important;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(15, 46, 31, 0.04);
+  box-shadow: 0 4px 12px rgba(15, 46, 31, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-header.bg-primary {
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(15, 46, 31, 0.12) !important;
+}
+
+.card-header.bg-primary, .card-header.bg-dark {
   background-color: var(--fud-green-dark) !important;
   color: #FFFFFF !important;
   border-bottom: 3px solid var(--fud-gold) !important;
@@ -187,7 +218,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Form Controls & Inputs */
 .form-control:focus, .form-select:focus {
   border-color: var(--fud-gold) !important;
-  box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25) !important;
+  box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.3) !important;
 }
 
 /* Code & Exchange Pass Tags */
@@ -195,6 +226,21 @@ code {
   color: var(--fud-green-dark) !important;
   background-color: var(--fud-gold-light) !important;
   border: 1px solid var(--fud-gold) !important;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Nav Pills / Custom Tabs */
+.nav-pills .nav-link {
+  color: var(--fud-green);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--fud-green) !important;
+  color: var(--fud-gold-bright) !important;
+  box-shadow: 0 2px 8px rgba(15, 46, 31, 0.2);
 }
 
 /* Links */
@@ -209,4 +255,40 @@ a.text-primary:hover {
 /* Spinners */
 .spinner-border.text-primary {
   color: var(--fud-gold) !important;
-}
+}
+
+/* Pulse Animation for Live Auctions */
+.pulse-badge {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
+/* Standardized FUD Footer */
+.fud-footer {
+  background-color: var(--fud-green-dark);
+  color: rgba(255, 255, 255, 0.85);
+  border-top: 4px solid var(--fud-gold);
+  margin-top: auto;
+}
+
+.fud-footer a {
+  color: var(--fud-gold-bright);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.fud-footer a:hover {
+  color: #FFFFFF;
+  text-decoration: underline;
+}

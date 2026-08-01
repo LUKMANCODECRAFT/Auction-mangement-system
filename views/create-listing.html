@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">
@@ -19,18 +20,20 @@
     </div>
   </nav>
 
-  <div class="container py-5">
+  <main class="container py-5 flex-grow-1">
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-7">
-        <div class="card border-0 shadow-lg rounded-3">
+        <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+          <div class="card-header bg-primary text-white p-4">
+            <h4 class="fw-bold mb-0 text-white"><i class="bi bi-plus-circle-fill text-warning me-2"></i> Post Item on Campus Marketplace</h4>
+            <small class="opacity-90">Set starting price and auction duration for verified campus bidders.</small>
+          </div>
           <div class="card-body p-4 p-md-5">
-            <h3 class="fw-bold text-dark text-center mb-1">Post Item on Campus Marketplace</h3>
-            <p class="text-muted text-center mb-4 small">Set your starting price and auction duration for campus bidders.</p>
 
             <form id="createListingForm">
               <div class="mb-3">
                 <label for="productTitle" class="form-label fw-bold">Item Title</label>
-                <input type="text" class="form-control" id="productTitle" placeholder="e.g. Dell Core i5 Laptop / Engineering Textbook" required>
+                <input type="text" class="form-control" id="productTitle" placeholder="e.g. HP Pavilion Core i5 Laptop / Engineering Textbook" required>
               </div>
 
               <div class="row g-3 mb-3">
@@ -38,16 +41,16 @@
                   <label for="category" class="form-label fw-bold">Category</label>
                   <select class="form-select" id="category" required>
                     <option value="" disabled selected>Select category</option>
-                    <option value="Academic Books">Academic Books</option>
-                    <option value="Electronics & Hardware">Electronics & Hardware</option>
-                    <option value="Vehicles & Cycles">Vehicles & Cycles</option>
-                    <option value="Hostel Gear">Hostel Gear</option>
+                    <option value="Academic Books">Academic Books & Notes</option>
+                    <option value="Hostel & Room Appliances">Hostel & Room Appliances</option>
+                    <option value="Electronics & Hardware">Electronics & Gadgets</option>
+                    <option value="Vehicles & Cycles">Vehicles & Bicycles</option>
                     <option value="Fashion & Accessories">Fashion & Accessories</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label for="startingPrice" class="form-label fw-bold">Starting Price (₦)</label>
-                  <input type="number" class="form-control" id="startingPrice" placeholder="2000" min="100" required>
+                  <input type="number" class="form-control" id="startingPrice" placeholder="2500" min="100" required>
                 </div>
               </div>
 
@@ -55,29 +58,62 @@
                 <div class="col-md-6">
                   <label for="durationHours" class="form-label fw-bold">Auction Duration (Hours)</label>
                   <input type="number" step="0.01" class="form-control" id="durationHours" value="24" required>
-                  <div class="form-text">Tip: Use <code>0.02</code> (~1 min) for live expiration testing.</div>
+                  <div class="d-flex gap-1 mt-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDuration(0.02)">1 min test</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDuration(1)">1 hr</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDuration(24)">24 hrs</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDuration(72)">3 days</button>
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label for="imageUrl" class="form-label fw-bold">Product Image URL (Optional)</label>
-                  <input type="url" class="form-control" id="imageUrl" placeholder="https://...">
+                  <input type="url" class="form-control" id="imageUrl" placeholder="https://images.unsplash.com/..." oninput="previewImage()">
                 </div>
               </div>
 
-              <div class="mb-4">
-                <label for="description" class="form-label fw-bold">Item Description & Condition</label>
-                <textarea class="form-control" id="description" rows="3" placeholder="Provide details about hostel pickup location, item working condition, etc." required></textarea>
+              <!-- Image Preview Box -->
+              <div id="imagePreviewBox" class="mb-3 d-none text-center">
+                <small class="text-muted d-block mb-1">Image Preview</small>
+                <img id="imgPreview" src="" class="img-fluid rounded border shadow-sm" style="max-height: 160px; object-fit: cover;">
               </div>
 
-              <button type="submit" id="submitBtn" class="btn btn-gold btn-lg w-100 fw-bold mb-2">
+              <div class="mb-4">
+                <label for="description" class="form-label fw-bold">Item Description & Pickup Notes</label>
+                <textarea class="form-control" id="description" rows="3" placeholder="Provide details about hostel pickup location, working condition, accessories included, etc." required></textarea>
+              </div>
+
+              <button type="submit" id="submitBtn" class="btn btn-gold btn-lg w-100 fw-bold mb-2 shadow">
                 <i class="bi bi-check-circle me-1"></i> Publish Auction Listing
               </button>
-              <a href="index.html" class="btn btn-outline-secondary w-100">Cancel</a>
+              <a href="index.html" class="btn btn-outline-secondary w-100 fw-bold">Cancel</a>
             </form>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="fud-footer py-4 mt-5">
+    <div class="container text-center text-md-start">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace</h5>
+          <p class="small mb-0 text-light opacity-75">Peer-to-peer campus marketplace & auction ecosystem.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="index.html" class="me-3 small">Marketplace</a>
+          <a href="dashboard.html" class="me-3 small">Dashboard</a>
+          <a href="create-listing.html" class="me-3 small">Create Listing</a>
+          <a href="notifications.html" class="small">Notifications</a>
+        </div>
+      </div>
+      <hr class="my-3 border-secondary opacity-25">
+      <div class="text-center small opacity-75">
+        &copy; 2026 Federal University Dutse. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
@@ -88,15 +124,30 @@
         : window.location.origin;
     };
 
+    function setDuration(val) {
+      document.getElementById('durationHours').value = val;
+    }
+
+    function previewImage() {
+      const url = document.getElementById('imageUrl').value.trim();
+      const box = document.getElementById('imagePreviewBox');
+      const img = document.getElementById('imgPreview');
+
+      if (url) {
+        img.src = url;
+        box.classList.remove('d-none');
+      } else {
+        box.classList.add('d-none');
+      }
+    }
+
     const form = document.getElementById('createListingForm');
     const submitBtn = document.getElementById('submitBtn');
 
     if (form) {
       form.addEventListener('submit', async (e) => {
-        // 1. Prevent default browser form refresh immediately
         e.preventDefault();
 
-        // 2. Safely check token
         const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
         if (!token) {
           alert('You must be logged in to post an item.');
@@ -104,7 +155,6 @@
           return;
         }
 
-        // 3. Collect values
         const productTitle = document.getElementById('productTitle').value.trim();
         const category = document.getElementById('category').value;
         const startingPrice = parseFloat(document.getElementById('startingPrice').value);
@@ -112,7 +162,6 @@
         const imageUrl = document.getElementById('imageUrl').value.trim();
         const description = document.getElementById('description').value.trim();
 
-        // Disable button during network call
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Publishing...`;
 
@@ -146,7 +195,6 @@
             alert('🎉 Listing Published Successfully!');
           }
 
-          // Redirect to main page after creation
           setTimeout(() => {
             window.location.href = 'index.html';
           }, 1000);

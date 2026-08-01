@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">
@@ -19,15 +20,20 @@
     </div>
   </nav>
 
-  <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+  <main class="container py-5 flex-grow-1">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
         <h3 class="fw-bold text-dark mb-0"><i class="bi bi-bell-fill text-warning me-2"></i> Activity Alerts & Notifications</h3>
-        <small class="text-muted">Real-time alerts for live bids, outbid events, and winning passes.</small>
+        <small class="text-muted">Real-time alerts for bids, outbid events, and winning exchange passes.</small>
       </div>
-      <button class="btn btn-outline-danger btn-sm fw-bold" onclick="clearNotifications()">
-        <i class="bi bi-trash me-1"></i> Clear History
-      </button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-warning btn-sm fw-bold" onclick="addTestNotification()">
+          <i class="bi bi-plus-circle me-1"></i> Trigger Test Alert
+        </button>
+        <button class="btn btn-outline-danger btn-sm fw-bold" onclick="clearNotifications()">
+          <i class="bi bi-trash me-1"></i> Clear History
+        </button>
+      </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
@@ -39,7 +45,29 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="fud-footer py-4 mt-5">
+    <div class="container text-center text-md-start">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace</h5>
+          <p class="small mb-0 text-light opacity-75">Peer-to-peer campus marketplace & auction ecosystem.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="index.html" class="me-3 small">Marketplace</a>
+          <a href="dashboard.html" class="me-3 small">Dashboard</a>
+          <a href="create-listing.html" class="me-3 small">Create Listing</a>
+          <a href="notifications.html" class="small">Notifications</a>
+        </div>
+      </div>
+      <hr class="my-3 border-secondary opacity-25">
+      <div class="text-center small opacity-75">
+        &copy; 2026 Federal University Dutse. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
@@ -61,7 +89,7 @@
 
       container.innerHTML = '';
       history.forEach(item => {
-        const badgeBg = item.type === 'success' ? 'bg-fud-green' : (item.type === 'danger' ? 'bg-secondary' : 'bg-gold');
+        const badgeBg = item.type === 'success' ? 'bg-fud-green' : (item.type === 'danger' ? 'bg-danger' : 'bg-gold');
         
         container.innerHTML += `
           <div class="list-group-item p-4 d-flex justify-content-between align-items-center">
@@ -79,6 +107,13 @@
 
     function clearNotifications() {
       localStorage.removeItem('fud_notifications');
+      renderNotifications();
+    }
+
+    function addTestNotification() {
+      if (typeof showToast === 'function') {
+        showToast('🔔 Test Notification: You have ₦50,000 available in your campus wallet!', 'gold');
+      }
       renderNotifications();
     }
 

@@ -1,18 +1,18 @@
-// Dynamic API URL: Automatically switches between localhost and Render domain
+// Dynamic API URL: Automatically switches between localhost and production
 const BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://localhost:5000'
   : window.location.origin;
 
 const API_URL = `${BASE_URL}/api/auth`;
 
-// Local Storage Helper Functions
+// Local Storage Helpers
 const getToken = () => localStorage.getItem('fud_token');
 const getUser = () => {
   const user = localStorage.getItem('fud_user');
   return user ? JSON.parse(user) : null;
 };
 
-// Record notification to localStorage history for notifications.html
+// Notification History Helper
 const recordNotificationHistory = (message, type = 'info') => {
   try {
     const history = JSON.parse(localStorage.getItem('fud_notifications') || '[]');
@@ -21,7 +21,7 @@ const recordNotificationHistory = (message, type = 'info') => {
     if (type === 'success') title = 'Success Notification';
     if (type === 'danger') title = 'Security / Error Alert';
     if (type === 'warning') title = 'Action Required';
-    if (type === 'primary') title = 'Marketplace Update';
+    if (type === 'gold' || type === 'primary') title = 'Marketplace Update';
 
     const newEntry = {
       title,
@@ -31,13 +31,13 @@ const recordNotificationHistory = (message, type = 'info') => {
     };
 
     history.unshift(newEntry);
-    localStorage.setItem('fud_notifications', JSON.stringify(history.slice(0, 20)));
+    localStorage.setItem('fud_notifications', JSON.stringify(history.slice(0, 25)));
   } catch (err) {
     console.error('Failed to save notification history:', err);
   }
 };
 
-// Global Toast Notification Helper
+// Global Toast Notification System
 const showNotification = (message, type = 'dark') => {
   recordNotificationHistory(message, type);
 
@@ -72,7 +72,8 @@ const showNotification = (message, type = 'dark') => {
   const toastMsg = document.getElementById('toastMessage');
   if (toastMsg) toastMsg.innerText = message;
 
-  toastEl.className = `toast align-items-center text-white bg-${type} border-0 shadow-lg show`;
+  const bgClass = type === 'success' ? 'bg-fud-green' : (type === 'gold' ? 'bg-gold text-dark' : `bg-${type}`);
+  toastEl.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg show`;
 
   if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
     const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
@@ -88,6 +89,44 @@ const showNotification = (message, type = 'dark') => {
 
 window.showToast = showNotification;
 
+// Self Top-Up Virtual Wallet helper
+async function topupSelfWallet(amount = 50000) {
+  const token = getToken();
+  if (!token) {
+    showNotification('Please log in to top up your wallet.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/topup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Top-up failed');
+
+    const user = getUser();
+    if (user) {
+      user.walletBalance = data.newBalance;
+      localStorage.setItem('fud_user', JSON.stringify(user));
+    }
+
+    showNotification(data.message, 'success');
+    updateNav();
+
+    const walletEl = document.getElementById('dashWalletBalance');
+    if (walletEl) walletEl.innerText = `₦${(data.newBalance || 0).toLocaleString()}`;
+  } catch (err) {
+    showNotification(`Top-up Error: ${err.message}`, 'danger');
+  }
+}
+window.topupSelfWallet = topupSelfWallet;
+
 // Dynamic Navbar Renderer
 const updateNav = async () => {
   const token = getToken();
@@ -95,9 +134,9 @@ const updateNav = async () => {
   const navContainer = document.getElementById('navAuthActions');
 
   const navBrand = document.querySelector('.navbar-brand');
-  if (navBrand && !navBrand.querySelector('.fud-logo-img')) {
+  if (navBrand && !navBrand.querySelector('.fud-logo-icon')) {
     navBrand.innerHTML = `
-      <i class="bi bi-gavel text-warning fs-4 me-2"></i>
+      <i class="bi bi-gavel text-warning fs-4 me-2 fud-logo-icon"></i>
       <span class="fw-bold">Federal University Dutse Marketplace</span>
     `;
   }
@@ -123,20 +162,22 @@ const updateNav = async () => {
 
   if (token && user) {
     let adminBtn = user.role === 'admin' 
-      ? `<a href="admin.html" class="btn btn-gold btn-sm fw-bold me-1"><i class="bi bi-shield-lock me-1"></i> Admin Console</a>` 
+      ? `<a href="admin.html" class="btn btn-gold btn-sm fw-bold me-1"><i class="bi bi-shield-lock me-1"></i> Admin</a>` 
       : '';
 
     navContainer.innerHTML = `
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="notifications.html" class="btn btn-outline-light btn-sm position-relative me-1" title="Notification Center">
-          <i class="bi bi-bell-fill"></i>
+        <a href="notifications.html" class="btn btn-outline-light btn-sm me-1" title="Notifications">
+          <i class="bi bi-bell-fill text-warning"></i>
         </a>
         <span class="navbar-text text-light me-1">
           <i class="bi bi-person-circle text-warning me-1"></i> 
           <strong>${user.fullName}</strong> 
           <span class="badge bg-secondary ms-1">${(user.role || 'USER').toUpperCase()}</span>
         </span>
-        <span class="badge bg-gold p-2 fs-6 me-1">₦${(user.walletBalance || 0).toLocaleString()}</span>
+        <button class="btn btn-gold btn-sm fw-bold me-1" onclick="topupSelfWallet(50000)" title="Click to add ₦50,000 virtual funds for testing">
+          ₦${(user.walletBalance || 0).toLocaleString()} <i class="bi bi-plus-circle ms-1"></i>
+        </button>
         <a href="dashboard.html" class="btn btn-outline-light btn-sm me-1">Dashboard</a>
         ${adminBtn}
         <button class="btn btn-outline-light btn-sm fw-bold" onclick="logout()">Logout</button>

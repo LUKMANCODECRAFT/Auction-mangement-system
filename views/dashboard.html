@@ -8,87 +8,202 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">
         <i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace
       </a>
-      <div>
-        <a href="index.html" class="btn btn-outline-light btn-sm fw-bold">
-          <i class="bi bi-arrow-left me-1"></i> Back to Marketplace
-        </a></div>
       <div class="ms-auto d-flex align-items-center" id="navAuthActions"></div>
     </div>
   </nav>
 
-  <div class="container py-5">
+  <main class="container py-5 flex-grow-1">
     
     <!-- Welcome Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
         <h2 class="fw-bold text-dark mb-1">Welcome, <span id="dashUserName">User</span></h2>
-        <p class="text-muted mb-0 small">Manage your listed items, winning bids, and campus exchange passes.</p>
+        <p class="text-muted mb-0 small">Manage your listed items, active bids, and campus exchange pass codes.</p>
       </div>
-      <a href="create-listing.html" class="btn btn-primary btn-lg fw-bold shadow-sm">
-        <i class="bi bi-plus-circle me-1"></i> + Create New Listing
-      </a>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-warning btn-md fw-bold" onclick="topupSelfWallet(50000)">
+          <i class="bi bi-plus-circle me-1"></i> + Top-Up Wallet
+        </button>
+        <a href="create-listing.html" class="btn btn-gold btn-md fw-bold shadow-sm">
+          <i class="bi bi-plus-circle-fill me-1"></i> Post New Listing
+        </a>
+      </div>
     </div>
 
     <!-- Stat Cards Row -->
-    <div class="row g-4 mb-5">
-      <div class="col-md-4">
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
         <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
           <small class="text-muted fw-bold d-block mb-1">Virtual Wallet Balance</small>
-          <span class="fs-2 fw-extrabold text-gold" id="dashWalletBalance">₦0</span>
+          <div class="d-flex align-items-center justify-content-between">
+            <span class="fs-3 fw-extrabold text-gold" id="dashWalletBalance">₦0</span>
+            <button class="btn btn-light btn-sm text-warning" onclick="topupSelfWallet(50000)" title="Quick +₦50,000 Top Up"><i class="bi bi-cash-coin fs-5"></i></button>
+          </div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
           <small class="text-muted fw-bold d-block mb-1">Active Placed Bids</small>
-          <span class="fs-2 fw-extrabold text-gold" id="dashActiveBidsCount">0</span>
+          <span class="fs-3 fw-extrabold text-gold" id="dashActiveBidsCount">0</span>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
           <small class="text-muted fw-bold d-block mb-1">My Listed Items</small>
-          <span class="fs-2 fw-extrabold text-fud-green" id="dashListedItemsCount">0</span>
+          <span class="fs-3 fw-extrabold text-fud-green" id="dashListedItemsCount">0</span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 rounded-3 bg-white h-100">
+          <small class="text-muted fw-bold d-block mb-1">Won Items & Passes</small>
+          <span class="fs-3 fw-extrabold text-success" id="dashWonCount">0</span>
         </div>
       </div>
     </div>
 
-    <!-- Listings Table Card -->
-    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam text-warning me-2"></i> My Item Listings, Winners & Exchange Passes</h5>
-        <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadDashboardData()">
-          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+    <!-- Dashboard Tabs -->
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded-3 border shadow-sm" id="dashTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="my-listings-tab" data-bs-toggle="tab" data-bs-target="#my-listings" type="button" role="tab">
+          <i class="bi bi-box-seam me-1"></i> My Listed Items
         </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="my-bids-tab" data-bs-toggle="tab" data-bs-target="#my-bids" type="button" role="tab">
+          <i class="bi bi-hammer me-1"></i> My Placed Bids
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="won-items-tab" data-bs-toggle="tab" data-bs-target="#won-items" type="button" role="tab">
+          <i class="bi bi-ticket-perforated me-1"></i> Won Exchange Passes
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="dashTabsContent">
+      <!-- Tab 1: My Listed Items -->
+      <div class="tab-pane fade show active" id="my-listings" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-card-list text-warning me-2"></i> Items Listed for Auction</h5>
+            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadDashboardData()">
+              <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Item Title</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Current / Final Price</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Winner</th>
+                  <th scope="col" class="pe-4">Exchange Pass Code</th>
+                </tr>
+              </thead>
+              <tbody id="userListingsTable">
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">Loading your listed items...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col" class="ps-4">Item Title</th>
-              <th scope="col">Category</th>
-              <th scope="col">Current / Final Price</th>
-              <th scope="col">Status</th>
-              <th scope="col">Winning Bidder</th>
-              <th scope="col" class="pe-4">Exchange Pass Code</th>
-            </tr>
-          </thead>
-          <tbody id="userListingsTable">
-            <tr>
-              <td colspan="6" class="text-center py-4 text-muted">Loading your listings...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Tab 2: My Placed Bids -->
+      <div class="tab-pane fade" id="my-bids" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-hammer text-warning me-2"></i> Bids You Placed</h5>
+            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadDashboardData()">
+              <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Item Title</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Your Highest Bid</th>
+                  <th scope="col">Current Price</th>
+                  <th scope="col">Auction Status</th>
+                  <th scope="col" class="pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody id="userBidsTable">
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">Loading your bid activity...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Won Items -->
+      <div class="tab-pane fade" id="won-items" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white p-4 border-bottom">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i> Campus Exchange Passes for Won Items</h5>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Item Title</th>
+                  <th scope="col">Winning Price</th>
+                  <th scope="col">Seller</th>
+                  <th scope="col" class="pe-4">Official FUD Exchange Pass Code</th>
+                </tr>
+              </thead>
+              <tbody id="userWonTable">
+                <tr>
+                  <td colspan="4" class="text-center py-4 text-muted">Loading won exchange passes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="fud-footer py-4 mt-5">
+    <div class="container text-center text-md-start">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace</h5>
+          <p class="small mb-0 text-light opacity-75">Secure peer-to-peer campus marketplace & auction ecosystem.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="index.html" class="me-3 small">Marketplace</a>
+          <a href="dashboard.html" class="me-3 small">Dashboard</a>
+          <a href="create-listing.html" class="me-3 small">Create Listing</a>
+          <a href="notifications.html" class="small">Notifications</a>
+        </div>
+      </div>
+      <hr class="my-3 border-secondary opacity-25">
+      <div class="text-center small opacity-75">
+        &copy; 2026 Federal University Dutse. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
@@ -108,93 +223,144 @@
         return;
       }
 
-      // Populate User Header
       if (user && user.fullName) {
         document.getElementById('dashUserName').innerText = user.fullName;
         document.getElementById('dashWalletBalance').innerText = `₦${(user.walletBalance || 0).toLocaleString()}`;
       }
 
-      const tableBody = document.getElementById('userListingsTable');
+      const apiUrl = getApiUrl();
 
+      // 1. Fetch My Listings
       try {
-        const apiUrl = getApiUrl();
-        const res = await fetch(`${apiUrl}/api/auctions`, {
+        const myListingsRes = await fetch(`${apiUrl}/api/auctions/my-auctions`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        const myListingsData = await myListingsRes.json();
+        const myListings = myListingsData.auctions || [];
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to load user auctions');
-
-        const allAuctions = data.auctions || [];
-        
-        // Filter listings created by the logged-in user
-        const myListings = allAuctions.filter(a => {
-          const sellerId = a.seller._id || a.seller;
-          return sellerId === user._id || sellerId === user.id;
-        });
-
-        // Calculate count of active bids placed by this user across all listings
-        let myPlacedBidsCount = 0;
-        allAuctions.forEach(auction => {
-          if (Array.isArray(auction.bids)) {
-            const hasBid = auction.bids.some(b => {
-              const bidderId = b.bidder._id || b.bidder;
-              return bidderId === user._id || bidderId === user.id;
-            });
-            if (hasBid) myPlacedBidsCount++;
-          }
-        });
-
-        // Update Stat Counters
         document.getElementById('dashListedItemsCount').innerText = myListings.length;
-        document.getElementById('dashActiveBidsCount').innerText = myPlacedBidsCount;
 
+        const tableBody = document.getElementById('userListingsTable');
         if (myListings.length === 0) {
           tableBody.innerHTML = `
             <tr>
               <td colspan="6" class="text-center py-5">
                 <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
-                <h6 class="fw-bold text-dark mb-1">No Listings Found</h6>
-                <p class="text-muted small mb-3">You haven't posted any items for auction yet.</p>
-                <a href="create-listing.html" class="btn btn-primary btn-sm fw-bold">+ Post Your First Item</a>
+                <h6 class="fw-bold text-dark mb-1">No Listed Items Found</h6>
+                <p class="text-muted small mb-3">You haven't listed any items for auction yet.</p>
+                <a href="create-listing.html" class="btn btn-gold btn-sm fw-bold">+ Post Your First Item</a>
               </td>
             </tr>
           `;
-          return;
+        } else {
+          tableBody.innerHTML = '';
+          myListings.forEach(item => {
+            const winner = item.winner ? (item.winner.fullName || 'Winner Assigned') : (item.bids && item.bids.length > 0 ? 'Highest Bidder' : 'No Bids');
+            const exchangePass = item.exchangePassCode || (item.status === 'completed' ? 'FUD-PASS-EXCHANGE' : 'Active Auction');
+
+            tableBody.innerHTML += `
+              <tr>
+                <td class="ps-4 fw-bold text-dark">${item.productTitle}</td>
+                <td><span class="badge bg-light text-dark border">${item.category}</span></td>
+                <td class="fw-bold text-success">₦${(item.currentPrice || 0).toLocaleString()}</td>
+                <td>
+                  <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'} px-2 py-1">
+                    ${(item.status || 'ACTIVE').toUpperCase()}
+                  </span>
+                </td>
+                <td class="small text-muted">${winner}</td>
+                <td class="pe-4">
+                  <code class="bg-light px-2 py-1 rounded text-primary fw-bold">${exchangePass}</code>
+                </td>
+              </tr>
+            `;
+          });
+        }
+      } catch (err) {
+        console.error('My Listings Fetch Error:', err);
+      }
+
+      // 2. Fetch My Placed Bids & Won Passes
+      try {
+        const myBidsRes = await fetch(`${apiUrl}/api/auctions/my-bids`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const myBidsData = await myBidsRes.json();
+        const myBids = myBidsData.bids || [];
+
+        document.getElementById('dashActiveBidsCount').innerText = myBids.filter(b => b.status === 'active').length;
+
+        const wonBids = myBids.filter(b => b.isWinner);
+        document.getElementById('dashWonCount').innerText = wonBids.length;
+
+        // Populate My Bids Table
+        const bidsTableBody = document.getElementById('userBidsTable');
+        if (myBids.length === 0) {
+          bidsTableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <i class="bi bi-gavel fs-2 text-muted d-block mb-2"></i>
+                <h6 class="fw-bold text-dark mb-1">No Bids Placed Yet</h6>
+                <p class="text-muted small mb-3">Explore active campus auctions and place your bids.</p>
+                <a href="index.html" class="btn btn-gold btn-sm fw-bold">Browse Auctions</a>
+              </td>
+            </tr>
+          `;
+        } else {
+          bidsTableBody.innerHTML = '';
+          myBids.forEach(b => {
+            bidsTableBody.innerHTML += `
+              <tr>
+                <td class="ps-4 fw-bold text-dark">${b.productTitle}</td>
+                <td><span class="badge bg-light text-dark border">${b.category}</span></td>
+                <td class="fw-bold text-gold">₦${(b.myHighestBid || 0).toLocaleString()}</td>
+                <td class="fw-bold text-success">₦${(b.currentPrice || 0).toLocaleString()}</td>
+                <td>
+                  <span class="badge ${b.status === 'active' ? 'bg-success' : 'bg-secondary'} px-2 py-1">
+                    ${(b.status || 'ACTIVE').toUpperCase()}
+                  </span>
+                </td>
+                <td class="pe-4">
+                  <a href="place-bid.html?id=${b.auctionId}" class="btn btn-outline-primary btn-sm fw-bold">View Item</a>
+                </td>
+              </tr>
+            `;
+          });
         }
 
-        tableBody.innerHTML = '';
-        myListings.forEach(item => {
-          const winner = item.winner ? (item.winner.fullName || 'Winner Assigned') : (item.bids && item.bids.length > 0 ? 'Leading Bids' : 'No Bids Yet');
-          const exchangePass = item.exchangePassCode || (item.status === 'completed' ? 'FUD-PASS-EXCHANGE' : 'Pending Completion');
-
-          tableBody.innerHTML += `
+        // Populate Won Passes Table
+        const wonTableBody = document.getElementById('userWonTable');
+        if (wonBids.length === 0) {
+          wonTableBody.innerHTML = `
             <tr>
-              <td class="ps-4 fw-bold text-dark">${item.productTitle}</td>
-              <td><span class="badge bg-light text-dark border">${item.category}</span></td>
-              <td class="fw-bold text-success">₦${(item.currentPrice || 0).toLocaleString()}</td>
-              <td>
-                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'} px-2 py-1">
-                  ${(item.status || 'ACTIVE').toUpperCase()}
-                </span>
-              </td>
-              <td class="small text-muted">${winner}</td>
-              <td class="pe-4">
-                <code class="bg-light px-2 py-1 rounded text-primary fw-bold">${exchangePass}</code>
+              <td colspan="4" class="text-center py-5">
+                <i class="bi bi-ticket fs-2 text-muted d-block mb-2"></i>
+                <h6 class="fw-bold text-dark mb-1">No Won Auctions Yet</h6>
+                <p class="text-muted small">When you win an auction, your official hostel exchange pass will appear here!</p>
               </td>
             </tr>
           `;
-        });
+        } else {
+          wonTableBody.innerHTML = '';
+          wonBids.forEach(w => {
+            const sellerName = w.seller && w.seller.fullName ? w.seller.fullName : 'Campus Seller';
+            wonTableBody.innerHTML += `
+              <tr>
+                <td class="ps-4 fw-bold text-dark">${w.productTitle}</td>
+                <td class="fw-bold text-gold">₦${(w.currentPrice || 0).toLocaleString()}</td>
+                <td class="small text-muted">${sellerName}</td>
+                <td class="pe-4">
+                  <code class="bg-light px-3 py-2 rounded text-primary fs-6 fw-bold border border-warning">
+                    🎟️ ${w.exchangePassCode || 'FUD-PASS-SETTLED'}
+                  </code>
+                </td>
+              </tr>
+            `;
+          });
+        }
 
       } catch (err) {
-        console.error('Dashboard Load Error:', err);
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4 text-danger">
-              <i class="bi bi-exclamation-triangle me-1"></i> ${err.message}
-            </td>
-          </tr>
-        `;
+        console.error('My Bids Fetch Error:', err);
       }
     }
 

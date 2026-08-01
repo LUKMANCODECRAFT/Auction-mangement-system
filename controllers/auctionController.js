@@ -1,13 +1,35 @@
 const Auction = require('../models/Auction');
 const User = require('../models/User');
 
-// @desc    Get all active auctions
+// @desc    Get auctions (supports filtering by status, category, search)
 // @route   GET /api/auctions
 // @access  Public
 exports.getAuctions = async (req, res) => {
   try {
-    const auctions = await Auction.find({ status: 'active' })
+    const { status, category, search } = req.query;
+
+    const filter = {};
+    if (status && status !== 'all') {
+      filter.status = status;
+    } else if (!status) {
+      filter.status = 'active';
+    }
+
+    if (category && category !== 'ALL') {
+      filter.category = category;
+    }
+
+    if (search) {
+      filter.$or = [
+        { productTitle: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const auctions = await Auction.find(filter)
       .populate('seller', 'fullName email')
+      .populate('winner', 'fullName email')
+      .populate('bids.bidder', 'fullName email')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -28,6 +50,7 @@ exports.getAuctionById = async (req, res) => {
   try {
     const auction = await Auction.findById(req.params.id)
       .populate('seller', 'fullName email')
+      .populate('winner', 'fullName email')
       .populate('bids.bidder', 'fullName email');
 
     if (!auction) {
@@ -124,18 +147,16 @@ exports.placeBid = async (req, res) => {
       });
     }
 
-    // Safely update price and bids array using exact schema keys
+    // Update price and bids array
     auction.currentPrice = parsedBid;
     if (!Array.isArray(auction.bids)) {
       auction.bids = [];
     }
 
-    // Map properties to match Auction Schema validation rules
     auction.bids.push({
       bidder: userId,
       bidAmount: parsedBid,
-      amount: parsedBid,
-      time: new Date()
+      bidTime: new Date()
     });
 
     await auction.save();
@@ -158,5 +179,67 @@ exports.placeBid = async (req, res) => {
   } catch (error) {
     console.error('Error in placeBid:', error);
     res.status(500).json({ success: false, message: error.message || 'Server error placing bid' });
+  }
+};
+
+// @desc    Get user's own listings (Active & Settled)
+// @route   GET /api/auctions/my-auctions
+// @access  Private
+exports.getMyAuctions = async (req, res) => {
+  try {
+    const auctions = await Auction.find({ seller: req.user._id })
+      .populate('winner', 'fullName email')
+      .populate('bids.bidder', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: auctions.length,
+      auctions
+    });
+  } catch (error) {
+    console.error('Error in getMyAuctions:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch your auctions' });
+  }
+};
+
+// @desc    Get user's placed bids and won items
+// @route   GET /api/auctions/my-bids
+// @access  Private
+exports.getMyBids = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const auctions = await Auction.find({ 'bids.bidder': userId })
+      .populate('seller', 'fullName email')
+      .populate('winner', 'fullName email')
+      .sort({ updatedAt: -1 });
+
+    const formattedBids = auctions.map(auction => {
+      const userBids = auction.bids.filter(b => b.bidder && b.bidder.toString() === userId.toString());
+      const maxUserBid = userBids.reduce((max, b) => (b.bidAmount > max ? b.bidAmount : max), 0);
+      const isWinner = auction.winner && auction.winner._id.toString() === userId.toString();
+
+      return {
+        auctionId: auction._id,
+        productTitle: auction.productTitle,
+        category: auction.category,
+        imageUrl: auction.imageUrl,
+        currentPrice: auction.currentPrice,
+        myHighestBid: maxUserBid,
+        status: auction.status,
+        isWinner,
+        exchangePassCode: isWinner ? auction.exchangePassCode : null,
+        seller: auction.seller
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: formattedBids.length,
+      bids: formattedBids
+    });
+  } catch (error) {
+    console.error('Error in getMyBids:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch your bid activity' });
   }
 };

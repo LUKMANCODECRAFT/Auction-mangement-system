@@ -1,16 +1,28 @@
-const socket = typeof io !== 'undefined' ? io('http://localhost:5000') : null;
+// Dynamic BASE_URL for API & Socket connections
+const getAppBaseUrl = () => {
+  return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+    ? 'http://localhost:5000'
+    : window.location.origin;
+};
 
-const formatTimeRemaining = (endTimeStr) => {
-  const total = Date.parse(endTimeStr) - Date.parse(new Date());
-  if (total <= 0) return { total, text: 'AUCTION ENDED', isEnded: true };
+const socket = typeof io !== 'undefined' ? io(getAppBaseUrl()) : null;
 
-  const seconds = Math.floor((total / 1000) % 60);
-  const minutes = Math.floor((total / 1000 / 60) % 60);
-  const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+const formatTimeRemaining = (createdAt, durationHours) => {
+  const createdDate = createdAt ? new Date(createdAt).getTime() : new Date().getTime();
+  const validDuration = parseFloat(durationHours) || 24;
+  const endTime = createdDate + (validDuration * 60 * 60 * 1000);
+  const now = new Date().getTime();
+  const diff = endTime - now;
+
+  if (diff <= 0) return { total: diff, text: 'AUCTION ENDED', isEnded: true };
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
   return {
-    total,
-    text: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+    total: diff,
+    text: `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`,
     isEnded: false
   };
 };
@@ -24,17 +36,17 @@ const startCountdowns = (auctions) => {
     if (!timerElement) return;
 
     const updateTicker = () => {
-      const time = formatTimeRemaining(auction.endTime);
+      const time = formatTimeRemaining(auction.createdAt, auction.durationHours);
 
       if (time.isEnded || auction.status !== 'active') {
         timerElement.innerText = 'AUCTION ENDED';
         if (badgeElement) {
-          badgeElement.className = 'badge bg-danger position-absolute top-0 end-0 m-2 px-3 py-2';
+          badgeElement.className = 'badge bg-danger position-absolute top-0 end-0 m-2 px-3 py-2 shadow';
           badgeElement.innerHTML = '<i class="bi bi-x-circle me-1"></i> CLOSED';
         }
-        if (bidButton) {
+        if (bidButton && !bidButton.classList.contains('disabled')) {
           bidButton.classList.add('disabled', 'btn-secondary');
-          bidButton.classList.remove('btn-primary');
+          bidButton.classList.remove('btn-gold', 'btn-primary');
           bidButton.innerText = 'Auction Closed';
           bidButton.removeAttribute('href');
         }
@@ -49,18 +61,19 @@ const startCountdowns = (auctions) => {
 };
 
 const loadAuctions = async () => {
-  const grid = document.getElementById('auctionsGrid');
+  const grid = document.getElementById('auctionsGrid') || document.getElementById('auctionListingsContainer');
   if (!grid) return;
 
   grid.innerHTML = `
     <div class="col-12 text-center py-5">
       <div class="spinner-border text-primary" role="status"></div>
-      <p class="text-muted mt-2">Loading campus marketplace items...</p>
+      <p class="text-muted mt-2">Loading Federal University Dutse auctions...</p>
     </div>
   `;
 
   try {
-    const res = await fetch('http://localhost:5000/api/auctions');
+    const baseUrl = getAppBaseUrl();
+    const res = await fetch(`${baseUrl}/api/auctions?status=active`);
     const data = await res.json();
 
     grid.innerHTML = '';
@@ -70,9 +83,9 @@ const loadAuctions = async () => {
         <div class="col-12 text-center py-5">
           <div class="card border-0 shadow-sm p-5 max-w-500 mx-auto">
             <i class="bi bi-box-seam display-1 text-muted mb-3"></i>
-            <h4 class="fw-bold">No Active Auctions Found</h4>
-            <p class="text-muted">Be the first student or seller to list an item on campus!</p>
-            <a href="create-listing.html" class="btn btn-primary fw-bold mx-auto mt-2">+ Post First Listing</a>
+            <h4 class="fw-bold text-dark">No Active Auctions Found</h4>
+            <p class="text-muted">Be the first student or seller to list a campus asset!</p>
+            <a href="create-listing.html" class="btn btn-gold fw-bold mx-auto mt-2">+ Post First Listing</a>
           </div>
         </div>
       `;
@@ -86,33 +99,33 @@ const loadAuctions = async () => {
       const imageSrc = auction.imageUrl && auction.imageUrl !== 'default-product.png' ? auction.imageUrl : defaultImg;
       const sellerName = auction.seller && typeof auction.seller === 'object' ? (auction.seller.fullName || 'Campus Seller') : 'Campus Seller';
 
+      const time = formatTimeRemaining(auction.createdAt, auction.durationHours);
+
       const card = document.createElement('div');
-      card.className = 'col-md-4 mb-4';
+      card.className = 'col-md-6 col-lg-4 mb-4';
       card.id = `auction-card-${auction._id}`;
       card.innerHTML = `
-        <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden card-hover">
           <div class="position-relative">
-            <img src="${imageSrc}" class="card-img-top" alt="${auction.productTitle}" style="height: 200px; object-fit: cover;">
-            <span class="badge ${auction.status === 'active' ? 'bg-primary' : 'bg-danger'} position-absolute top-0 end-0 m-2 px-3 py-2" id="badge-${auction._id}">
-              <i class="bi bi-clock me-1"></i> ${auction.status.toUpperCase()}
+            <img src="${imageSrc}" class="card-img-top" alt="${auction.productTitle}" style="height: 210px; object-fit: cover;">
+            <span class="badge ${time.isEnded ? 'bg-danger' : 'bg-dark'} text-warning position-absolute top-0 end-0 m-2 px-3 py-2 shadow" id="badge-${auction._id}">
+              ⏳ <span id="timer-${auction._id}">${time.text}</span>
             </span>
           </div>
           <div class="card-body d-flex flex-column p-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-light text-dark border">${auction.category}</span>
-              <span class="badge bg-dark text-warning font-monospace p-2">
-                ⏳ <span id="timer-${auction._id}">--:--:--</span>
-              </span>
+              <span class="badge bg-success p-2">LIVE</span>
             </div>
             
             <h5 class="card-title fw-bold text-dark mb-2">${auction.productTitle}</h5>
-            <p class="card-text text-muted small flex-grow-1">${auction.description}</p>
-            <hr>
+            <p class="card-text text-muted small flex-grow-1 text-truncate">${auction.description}</p>
+            <hr class="my-3">
             
             <div class="d-flex justify-content-between align-items-end mb-3">
               <div>
-                <small class="text-muted d-block">Current Price</small>
-                <span class="fs-4 fw-bold text-gold" id="price-${auction._id}">₦${auction.currentPrice.toLocaleString()}</span>
+                <small class="text-muted d-block fw-bold">Current Bid</small>
+                <span class="fs-4 fw-extrabold text-success" id="price-${auction._id}">₦${(auction.currentPrice || 0).toLocaleString()}</span>
               </div>
               <div class="text-end">
                 <small class="text-muted d-block">Seller</small>
@@ -120,8 +133,8 @@ const loadAuctions = async () => {
               </div>
             </div>
 
-            <a href="place-bid.html?id=${auction._id}" class="btn ${auction.status === 'active' ? 'btn-gold' : 'btn-secondary disabled'} w-100 fw-bold py-2" id="btn-bid-${auction._id}">
-              <i class="bi bi-gavel me-1"></i> ${auction.status === 'active' ? 'Place Bid' : 'Auction Closed'}
+            <a href="place-bid.html?id=${auction._id}" class="btn btn-gold w-100 fw-bold py-2 shadow-sm" id="btn-bid-${auction._id}">
+              <i class="bi bi-gavel me-1"></i> Place Bid
             </a>
           </div>
         </div>
@@ -133,7 +146,14 @@ const loadAuctions = async () => {
 
   } catch (err) {
     console.error('Failed to load auctions:', err);
-    grid.innerHTML = `<div class="col-12 text-center text-danger py-5">Failed to connect to backend server. Make sure Node server is running on port 5000.</div>`;
+    grid.innerHTML = `
+      <div class="col-12 text-center text-danger py-5">
+        <i class="bi bi-exclamation-triangle-fill fs-2 mb-2 d-block"></i>
+        <h5 class="fw-bold text-dark">Connection Error</h5>
+        <p class="text-muted small">${err.message}</p>
+        <button class="btn btn-outline-primary btn-sm fw-bold" onclick="loadAuctions()">Retry Loading</button>
+      </div>
+    `;
   }
 };
 
@@ -142,10 +162,12 @@ if (socket) {
     const priceElement = document.getElementById(`price-${data.auctionId}`);
     if (priceElement) {
       priceElement.innerText = `₦${data.newPrice.toLocaleString()}`;
+      priceElement.classList.add('text-warning');
+      setTimeout(() => priceElement.classList.remove('text-warning'), 1500);
     }
   });
 
-  socket.on('auctionClosed', () => {
+  socket.on('auctionEnded', () => {
     loadAuctions();
   });
 }

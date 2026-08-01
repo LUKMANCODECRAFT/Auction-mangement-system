@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">
@@ -19,13 +20,13 @@
     </div>
   </nav>
 
-  <div class="container py-5">
+  <main class="container py-5 flex-grow-1">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-warning me-2"></i> Admin Overwatch Console</h2>
-        <p class="text-muted mb-0 small">Manage role access, credit virtual wallets, and monitor campus transactions.</p>
+        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-warning me-2"></i> System Overwatch & User Administration</h2>
+        <p class="text-muted mb-0 small">Manage role permissions, credit virtual wallets, and monitor campus transactions.</p>
       </div>
-      <button class="btn btn-outline-primary btn-sm fw-bold" onclick="loadAdminData()">
+      <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill" onclick="loadAdminData()">
         <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Data
       </button>
     </div>
@@ -46,7 +47,7 @@
       </div>
       <div class="col-md-3">
         <div class="card border-0 shadow-sm p-4 rounded-3 bg-white text-center">
-          <small class="text-muted fw-bold d-block mb-1">Total Auctions</small>
+          <small class="text-muted fw-bold d-block mb-1">Total Auctions Listed</small>
           <span class="fs-2 fw-extrabold text-fud-green" id="adminTotalAuctions">0</span>
         </div>
       </div>
@@ -60,8 +61,11 @@
 
     <!-- User Management Table -->
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header bg-white p-4 border-bottom">
-        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-warning me-2"></i> User Overwatch & Wallet Funding</h5>
+      <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-warning me-2"></i> User Accounts & Wallet Management</h5>
+        <div style="max-width: 300px;">
+          <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="Search user by name or email..." oninput="filterAdminUsers()">
+        </div>
       </div>
 
       <div class="table-responsive">
@@ -83,11 +87,35 @@
         </table>
       </div>
     </div>
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="fud-footer py-4 mt-5">
+    <div class="container text-center text-md-start">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-gavel text-warning me-2"></i> Federal University Dutse Marketplace</h5>
+          <p class="small mb-0 text-light opacity-75">Admin Overwatch Console.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a href="index.html" class="me-3 small">Marketplace</a>
+          <a href="dashboard.html" class="me-3 small">Dashboard</a>
+          <a href="create-listing.html" class="me-3 small">Create Listing</a>
+          <a href="notifications.html" class="small">Notifications</a>
+        </div>
+      </div>
+      <hr class="my-3 border-secondary opacity-25">
+      <div class="text-center small opacity-75">
+        &copy; 2026 Federal University Dutse. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
   <script>
+    let globalAdminUsers = [];
+
     const getApiUrl = () => {
       return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
         ? 'http://localhost:5000'
@@ -102,7 +130,6 @@
       }
 
       const apiUrl = getApiUrl();
-      const userTable = document.getElementById('adminUserTable');
 
       try {
         const statsRes = await fetch(`${apiUrl}/api/admin/stats`, {
@@ -124,37 +151,12 @@
 
         if (!usersRes.ok) throw new Error(usersData.message || 'Access denied');
 
-        const users = usersData.users || [];
-        userTable.innerHTML = '';
-
-        users.forEach(u => {
-          const isUserAdmin = u.role === 'admin';
-          const roleBadgeClass = isUserAdmin ? 'bg-gold' : (u.role === 'seller' ? 'bg-light' : 'bg-secondary');
-
-          userTable.innerHTML += `
-            <tr>
-              <td class="ps-4 fw-bold text-dark">${u.fullName}</td>
-              <td class="small text-muted">${u.email}</td>
-              <td><span class="badge ${roleBadgeClass} px-2 py-1">${(u.role || 'USER').toUpperCase()}</span></td>
-              <td class="fw-bold text-gold">₦${(u.walletBalance || 0).toLocaleString()}</td>
-              <td class="text-end pe-4">
-                <button class="btn btn-outline-warning btn-sm me-2 fw-bold" onclick="topupWalletPrompt('${u._id}', '${u.fullName}')">
-                  <i class="bi bi-wallet2 me-1"></i> + Top-Up
-                </button>
-                ${isUserAdmin ? `
-                  <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="changeRole('${u._id}', 'bidder')">Demote</button>
-                ` : `
-                  <button class="btn btn-gold btn-sm fw-bold shadow-sm" onclick="changeRole('${u._id}', 'admin')">
-                    <i class="bi bi-shield-plus me-1"></i> Promote Admin
-                  </button>
-                `}
-              </td>
-            </tr>
-          `;
-        });
+        globalAdminUsers = usersData.users || [];
+        filterAdminUsers();
 
       } catch (err) {
         console.error('Admin Load Error:', err);
+        const userTable = document.getElementById('adminUserTable');
         userTable.innerHTML = `
           <tr>
             <td colspan="5" class="text-center py-4 text-danger fw-bold">
@@ -163,6 +165,51 @@
           </tr>
         `;
       }
+    }
+
+    function filterAdminUsers() {
+      const query = (document.getElementById('adminUserSearch')?.value || '').toLowerCase().trim();
+      const userTable = document.getElementById('adminUserTable');
+
+      const filtered = globalAdminUsers.filter(u => 
+        u.fullName.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        userTable.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">No users matching search query.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      userTable.innerHTML = '';
+      filtered.forEach(u => {
+        const isUserAdmin = u.role === 'admin';
+        const roleBadgeClass = isUserAdmin ? 'bg-gold' : (u.role === 'seller' ? 'bg-light text-dark border' : 'bg-secondary');
+
+        userTable.innerHTML += `
+          <tr>
+            <td class="ps-4 fw-bold text-dark">${u.fullName}</td>
+            <td class="small text-muted">${u.email}</td>
+            <td><span class="badge ${roleBadgeClass} px-2 py-1">${(u.role || 'USER').toUpperCase()}</span></td>
+            <td class="fw-bold text-gold">₦${(u.walletBalance || 0).toLocaleString()}</td>
+            <td class="text-end pe-4">
+              <button class="btn btn-outline-warning btn-sm me-2 fw-bold" onclick="topupWalletPrompt('${u._id}', '${u.fullName}')">
+                <i class="bi bi-wallet2 me-1"></i> + Top-Up
+              </button>
+              ${isUserAdmin ? `
+                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="changeRole('${u._id}', 'bidder')">Demote</button>
+              ` : `
+                <button class="btn btn-gold btn-sm fw-bold shadow-sm" onclick="changeRole('${u._id}', 'admin')">
+                  <i class="bi bi-shield-plus me-1"></i> Promote Admin
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      });
     }
 
     async function changeRole(userId, newRole) {
