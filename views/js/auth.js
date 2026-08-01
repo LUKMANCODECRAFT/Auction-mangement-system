@@ -134,9 +134,9 @@ const updateNav = async () => {
   const navContainer = document.getElementById('navAuthActions');
 
   const navBrand = document.querySelector('.navbar-brand');
-  if (navBrand && !navBrand.querySelector('.fud-logo-icon')) {
+  if (navBrand && !navBrand.querySelector('.fud-logo-img')) {
     navBrand.innerHTML = `
-      <i class="bi bi-gavel text-warning fs-4 me-2 fud-logo-icon"></i>
+      <img src="images/fud-logo.png" alt="Federal University Dutse Logo" class="fud-logo-img me-2">
       <span class="fw-bold">Federal University Dutse Marketplace</span>
     `;
   }

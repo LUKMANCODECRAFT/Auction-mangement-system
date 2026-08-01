@@ -44,6 +44,34 @@ main, .container {
   background: var(--fud-green);
 }
 
+/* Logo Image Styling */
+.fud-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  vertical-align: middle;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.fud-logo-img:hover {
+  transform: scale(1.05);
+}
+
+.fud-hero-logo {
+  max-height: 100px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+.fud-card-logo {
+  max-height: 75px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
 /* Navbar Branding - Deep Dark Green with Golden Accent Line */
 .navbar-dark.bg-dark {
   background-color: var(--fud-green-dark) !important;
@@ -54,6 +82,9 @@ main, .container {
 .navbar-brand {
   color: #FFFFFF !important;
   letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-brand i {
