@@ -23,8 +23,8 @@
   <main class="container py-5 flex-grow-1">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-warning me-2"></i> System Overwatch & User Administration</h2>
-        <p class="text-muted mb-0 small">Manage role permissions, credit virtual wallets, and monitor campus transactions.</p>
+        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-warning me-2"></i> System Overwatch & Admin Control</h2>
+        <p class="text-muted mb-0 small">Manage role permissions, credit virtual wallets, settle auctions, and moderate campus listings.</p>
       </div>
       <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill" onclick="loadAdminData()">
         <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Data
@@ -59,33 +59,86 @@
       </div>
     </div>
 
-    <!-- User Management Table -->
-    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-warning me-2"></i> User Accounts & Wallet Management</h5>
-        <div style="max-width: 300px;">
-          <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="Search user by name or email..." oninput="filterAdminUsers()">
+    <!-- Section Tabs -->
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded-3 border shadow-sm" id="adminTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-panel" type="button" role="tab">
+          <i class="bi bi-people-fill me-1"></i> User Accounts & Wallets
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="auctions-tab" data-bs-toggle="tab" data-bs-target="#auctions-panel" type="button" role="tab">
+          <i class="bi bi-gavel me-1"></i> Auction Moderation & Deletion
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabsContent">
+      
+      <!-- Panel 1: User Management -->
+      <div class="tab-pane fade show active" id="users-panel" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-warning me-2"></i> User Accounts & Wallet Management</h5>
+            <div style="max-width: 300px;">
+              <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="Search user by name or email..." oninput="filterAdminUsers()">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Full Name</th>
+                  <th scope="col">Email Address</th>
+                  <th scope="col">Current Role</th>
+                  <th scope="col">Wallet Balance</th>
+                  <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminUserTable">
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted">Loading user accounts...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col" class="ps-4">Full Name</th>
-              <th scope="col">Email Address</th>
-              <th scope="col">Current Role</th>
-              <th scope="col">Wallet Balance</th>
-              <th scope="col" class="text-end pe-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="adminUserTable">
-            <tr>
-              <td colspan="5" class="text-center py-4 text-muted">Loading user accounts...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Panel 2: Auction Moderation & Deletion -->
+      <div class="tab-pane fade" id="auctions-panel" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-gavel text-warning me-2"></i> Campus Auction Listings & Settlement</h5>
+            <div style="max-width: 300px;">
+              <input type="text" id="adminAuctionSearch" class="form-control form-control-sm" placeholder="Search auction title..." oninput="filterAdminAuctions()">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Product Title</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Current Price</th>
+                  <th scope="col">Seller</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Exchange Pass</th>
+                  <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminAuctionTable">
+                <tr>
+                  <td colspan="7" class="text-center py-4 text-muted">Loading auction listings...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+
     </div>
   </main>
 
@@ -115,6 +168,7 @@
   <script src="js/auth.js"></script>
   <script>
     let globalAdminUsers = [];
+    let globalAdminAuctions = [];
 
     const getApiUrl = () => {
       return window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
@@ -132,6 +186,7 @@
       const apiUrl = getApiUrl();
 
       try {
+        // Fetch stats
         const statsRes = await fetch(`${apiUrl}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -144,26 +199,28 @@
           document.getElementById('adminActiveAuctions').innerText = statsData.stats.activeAuctions;
         }
 
+        // Fetch users
         const usersRes = await fetch(`${apiUrl}/api/admin/users`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const usersData = await usersRes.json();
+        if (usersRes.ok) {
+          globalAdminUsers = usersData.users || [];
+          filterAdminUsers();
+        }
 
-        if (!usersRes.ok) throw new Error(usersData.message || 'Access denied');
-
-        globalAdminUsers = usersData.users || [];
-        filterAdminUsers();
+        // Fetch all auctions
+        const auctionsRes = await fetch(`${apiUrl}/api/admin/auctions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const auctionsData = await auctionsRes.json();
+        if (auctionsRes.ok) {
+          globalAdminAuctions = auctionsData.auctions || [];
+          filterAdminAuctions();
+        }
 
       } catch (err) {
         console.error('Admin Load Error:', err);
-        const userTable = document.getElementById('adminUserTable');
-        userTable.innerHTML = `
-          <tr>
-            <td colspan="5" class="text-center py-4 text-danger fw-bold">
-              <i class="bi bi-exclamation-triangle me-1"></i> ${err.message}
-            </td>
-          </tr>
-        `;
       }
     }
 
@@ -206,6 +263,56 @@
                   <i class="bi bi-shield-plus me-1"></i> Promote Admin
                 </button>
               `}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function filterAdminAuctions() {
+      const query = (document.getElementById('adminAuctionSearch')?.value || '').toLowerCase().trim();
+      const auctionTable = document.getElementById('adminAuctionTable');
+
+      const filtered = globalAdminAuctions.filter(a => 
+        a.productTitle.toLowerCase().includes(query) || a.category.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        auctionTable.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No auctions matching search query.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      auctionTable.innerHTML = '';
+      filtered.forEach(a => {
+        const sellerName = a.seller && a.seller.fullName ? a.seller.fullName : 'Campus Seller';
+        const passCode = a.exchangePassCode || (a.status === 'active' ? 'Active Listing' : 'No Winner');
+        const isLive = a.status === 'active';
+
+        auctionTable.innerHTML += `
+          <tr>
+            <td class="ps-4 fw-bold text-dark">${a.productTitle}</td>
+            <td><span class="badge bg-light text-dark border">${a.category}</span></td>
+            <td class="fw-bold text-success">₦${(a.currentPrice || 0).toLocaleString()}</td>
+            <td class="small text-muted">${sellerName}</td>
+            <td>
+              <span class="badge ${isLive ? 'bg-success' : 'bg-secondary'} px-2 py-1">
+                ${(a.status || 'ACTIVE').toUpperCase()}
+              </span>
+            </td>
+            <td class="small"><code>${passCode}</code></td>
+            <td class="text-end pe-4">
+              ${isLive ? `
+                <button class="btn btn-outline-warning btn-sm me-1 fw-bold" onclick="forceSettleAuction('${a._id}', '${a.productTitle}')" title="Force settle auction now and transfer funds">
+                  ⚡ Settle Now
+                </button>
+              ` : ''}
+              <button class="btn btn-outline-danger btn-sm fw-bold" onclick="deleteAuction('${a._id}', '${a.productTitle}')" title="Delete this auction">
+                <i class="bi bi-trash"></i> Delete
+              </button>
             </td>
           </tr>
         `;
@@ -255,6 +362,50 @@
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Top-up failed');
+
+        if (typeof showToast === 'function') showToast(data.message, 'success');
+        loadAdminData();
+      } catch (err) {
+        if (typeof showToast === 'function') showToast(`Error: ${err.message}`, 'danger');
+      }
+    }
+
+    async function deleteAuction(auctionId, title) {
+      if (!confirm(`Are you sure you want to delete auction "${title}"? This cannot be undone.`)) return;
+
+      const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
+      const apiUrl = getApiUrl();
+
+      try {
+        const res = await fetch(`${apiUrl}/api/admin/auctions/${auctionId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Deletion failed');
+
+        if (typeof showToast === 'function') showToast(`🗑️ Auction "${title}" deleted.`, 'success');
+        loadAdminData();
+      } catch (err) {
+        if (typeof showToast === 'function') showToast(`Error: ${err.message}`, 'danger');
+      }
+    }
+
+    async function forceSettleAuction(auctionId, title) {
+      if (!confirm(`Force settle auction "${title}" right now? Highest bidder will win and funds will be transferred.`)) return;
+
+      const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
+      const apiUrl = getApiUrl();
+
+      try {
+        const res = await fetch(`${apiUrl}/api/admin/auctions/${auctionId}/settle`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Force settlement failed');
 
         if (typeof showToast === 'function') showToast(data.message, 'success');
         loadAdminData();

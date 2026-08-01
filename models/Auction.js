@@ -9,10 +9,11 @@ const auctionSchema = new mongoose.Schema({
   imageUrl: { type: String, default: 'default-product.png' },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   startTime: { type: Date, default: Date.now },
-  endTime: { type: Date, required: true },
+  endTime: { type: Date },
+  durationHours: { type: Number, default: 24 },
   status: { 
     type: String, 
-    enum: ['active', 'closed', 'expired'], 
+    enum: ['active', 'closed', 'expired', 'completed'], 
     default: 'active' 
   },
   winner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

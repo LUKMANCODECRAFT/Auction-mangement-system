@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Auction = require('../models/Auction');
+const { settleAuction } = require('../utils/settlementHelper');
 
 // @desc    Get system overview stats
 // @route   GET /api/admin/stats
@@ -31,6 +32,23 @@ exports.getAllUsers = async (req, res) => {
   } catch (error) {
     console.error('Error in getAllUsers:', error.message);
     res.status(500).json({ success: false, message: 'Server error fetching user list' });
+  }
+};
+
+// @desc    Get all auctions for Admin Overwatch
+// @route   GET /api/admin/auctions
+// @access  Private (Admin)
+exports.getAllAuctions = async (req, res) => {
+  try {
+    const auctions = await Auction.find()
+      .populate('seller', 'fullName email')
+      .populate('winner', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, count: auctions.length, auctions });
+  } catch (error) {
+    console.error('Error in getAllAuctions:', error.message);
+    res.status(500).json({ success: false, message: 'Server error fetching all auctions' });
   }
 };
 
@@ -119,5 +137,25 @@ exports.deleteAuction = async (req, res) => {
   } catch (error) {
     console.error('Error in deleteAuction:', error.message);
     res.status(500).json({ success: false, message: 'Server error deleting auction' });
+  }
+};
+
+// @desc    Force Settle Auction Listing Now
+// @route   POST /api/admin/auctions/:id/settle
+// @access  Private (Admin)
+exports.forceSettleAuction = async (req, res) => {
+  try {
+    const settled = await settleAuction(req.params.id, req.io);
+    if (!settled) {
+      return res.status(400).json({ success: false, message: 'Could not settle auction' });
+    }
+    res.status(200).json({
+      success: true,
+      message: `Auction "${settled.productTitle}" settled successfully! Winner: ${settled.exchangePassCode || 'No bids'}`,
+      auction: settled
+    });
+  } catch (error) {
+    console.error('Error in forceSettleAuction:', error.message);
+    res.status(500).json({ success: false, message: 'Server error force-settling auction' });
   }
 };

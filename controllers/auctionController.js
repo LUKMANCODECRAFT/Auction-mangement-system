@@ -1,11 +1,23 @@
 const Auction = require('../models/Auction');
 const User = require('../models/User');
+const { settleExpiredAuctions, settleAuction } = require('../utils/settlementHelper');
 
-// @desc    Get auctions (supports filtering by status, category, search)
+// Safe ObjectId string extractor helper
+const getDocId = (doc) => {
+  if (!doc) return '';
+  if (typeof doc === 'string') return doc;
+  if (doc._id) return doc._id.toString();
+  return doc.toString();
+};
+
+// @desc    Get auctions (supports status, category, search query filtering)
 // @route   GET /api/auctions
 // @access  Public
 exports.getAuctions = async (req, res) => {
   try {
+    // Settle any expired auctions automatically
+    await settleExpiredAuctions(req.io);
+
     const { status, category, search } = req.query;
 
     const filter = {};
@@ -48,6 +60,8 @@ exports.getAuctions = async (req, res) => {
 // @access  Public
 exports.getAuctionById = async (req, res) => {
   try {
+    await settleExpiredAuctions(req.io);
+
     const auction = await Auction.findById(req.params.id)
       .populate('seller', 'fullName email')
       .populate('winner', 'fullName email')
@@ -115,6 +129,9 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Auction ID and Bid Amount are required' });
     }
 
+    // Auto settle if expired before bid attempt
+    await settleExpiredAuctions(req.io);
+
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       return res.status(404).json({ success: false, message: 'Auction item not found' });
@@ -125,7 +142,7 @@ exports.placeBid = async (req, res) => {
     }
 
     // Anti-self bidding check
-    if (auction.seller && auction.seller.toString() === userId.toString()) {
+    if (getDocId(auction.seller) === getDocId(userId)) {
       return res.status(400).json({ success: false, message: 'You cannot bid on your own listed product' });
     }
 
@@ -187,6 +204,8 @@ exports.placeBid = async (req, res) => {
 // @access  Private
 exports.getMyAuctions = async (req, res) => {
   try {
+    await settleExpiredAuctions(req.io);
+
     const auctions = await Auction.find({ seller: req.user._id })
       .populate('winner', 'fullName email')
       .populate('bids.bidder', 'fullName email')
@@ -208,16 +227,24 @@ exports.getMyAuctions = async (req, res) => {
 // @access  Private
 exports.getMyBids = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const auctions = await Auction.find({ 'bids.bidder': userId })
+    await settleExpiredAuctions(req.io);
+
+    const userId = getDocId(req.user._id);
+
+    // Find all auctions containing bids from this user
+    const auctions = await Auction.find({ 'bids.bidder': req.user._id })
       .populate('seller', 'fullName email')
       .populate('winner', 'fullName email')
       .sort({ updatedAt: -1 });
 
     const formattedBids = auctions.map(auction => {
-      const userBids = auction.bids.filter(b => b.bidder && b.bidder.toString() === userId.toString());
-      const maxUserBid = userBids.reduce((max, b) => (b.bidAmount > max ? b.bidAmount : max), 0);
-      const isWinner = auction.winner && auction.winner._id.toString() === userId.toString();
+      const userBids = auction.bids.filter(b => getDocId(b.bidder) === userId);
+      const maxUserBid = userBids.reduce((max, b) => {
+        const amt = b.bidAmount || b.amount || 0;
+        return amt > max ? amt : max;
+      }, 0);
+
+      const isWinner = getDocId(auction.winner) === userId;
 
       return {
         auctionId: auction._id,
