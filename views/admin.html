@@ -429,6 +429,24 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadAdminData();
+
+      // Manual tab switcher fallback for robust tab navigation
+      document.querySelectorAll('#adminTabs button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelectorAll('#adminTabs button').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('#adminTabsContent .tab-pane').forEach(p => p.classList.remove('show', 'active'));
+          
+          button.classList.add('active');
+          const targetId = button.getAttribute('data-bs-target');
+          if (targetId) {
+            const targetPane = document.querySelector(targetId);
+            if (targetPane) {
+              targetPane.classList.add('show', 'active');
+            }
+          }
+        });
+      });
     });
   </script>
 </body>
