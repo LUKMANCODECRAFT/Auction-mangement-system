@@ -285,6 +285,16 @@
         }
       } catch (err) {
         console.error('My Listings Fetch Error:', err);
+        const tableBody = document.getElementById('userListingsTable');
+        if (tableBody) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                <span class="text-danger">Unable to load listed items. ${err.message || ''}</span>
+              </td>
+            </tr>
+          `;
+        }
       }
 
       // 2. Fetch My Placed Bids & Won Passes

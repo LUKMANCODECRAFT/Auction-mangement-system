@@ -107,6 +107,11 @@
         const item = data.auction || data;
         const img = item.imageUrl || 'https://via.placeholder.com/400x250?text=FUD+Campus+Item';
         const sellerName = item.seller && item.seller.fullName ? item.seller.fullName : 'Campus Seller';
+        const sellerId = item.seller && (item.seller._id || item.seller.id) ? (item.seller._id || item.seller.id).toString() : (typeof item.seller === 'string' ? item.seller : '');
+        
+        const currentUser = typeof getUser === 'function' ? getUser() : JSON.parse(localStorage.getItem('fud_user') || '{}');
+        const currentUserId = currentUser ? (currentUser.id || currentUser._id || '').toString() : '';
+        const isSeller = sellerId && currentUserId && sellerId === currentUserId;
 
         container.innerHTML = `
           <img src="${img}" class="img-fluid rounded mb-3 w-100 shadow-sm" style="height: 230px; object-fit: cover;" alt="${item.productTitle}">
@@ -132,7 +137,13 @@
             </div>
           </div>
 
-          ${item.status === 'active' ? `
+          ${isSeller ? `
+            <div class="alert alert-warning text-center mb-4 border-warning shadow-sm">
+              <i class="bi bi-shield-exclamation fs-3 text-warning d-block mb-1"></i>
+              <h6 class="fw-bold text-dark mb-1">Seller Anti-Shill Notice</h6>
+              <p class="small mb-0">You listed this item. Sellers are strictly prohibited from bidding on their own auctions.</p>
+            </div>
+          ` : (item.status === 'active' ? `
             <form id="placeBidForm">
               <div class="mb-3">
                 <label for="bidAmount" class="form-label fw-bold">Your Bid Amount (₦)</label>
@@ -156,7 +167,7 @@
             <div class="alert alert-warning text-center mb-3">
               This auction has been completed or settled.
             </div>
-          `}
+          `)}
           
           <a href="index.html" class="btn btn-outline-secondary w-100 fw-bold">Back to Marketplace</a>
         `;

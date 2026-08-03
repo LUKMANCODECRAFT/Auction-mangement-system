@@ -236,7 +236,7 @@
       const userTable = document.getElementById('adminUserTable');
 
       const filtered = globalAdminUsers.filter(u => 
-        u.fullName.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+        (u.fullName || '').toLowerCase().includes(query) || (u.email || '').toLowerCase().includes(query)
       );
 
       if (filtered.length === 0) {
@@ -255,12 +255,12 @@
 
         userTable.innerHTML += `
           <tr>
-            <td class="ps-4 fw-bold text-dark">${u.fullName}</td>
-            <td class="small text-muted">${u.email}</td>
+            <td class="ps-4 fw-bold text-dark">${u.fullName || 'Campus User'}</td>
+            <td class="small text-muted">${u.email || ''}</td>
             <td><span class="badge ${roleBadgeClass} px-2 py-1">${(u.role || 'USER').toUpperCase()}</span></td>
             <td class="fw-bold text-gold">₦${(u.walletBalance || 0).toLocaleString()}</td>
             <td class="text-end pe-4">
-              <button class="btn btn-outline-warning btn-sm me-2 fw-bold" onclick="topupWalletPrompt('${u._id}', '${u.fullName}')">
+              <button class="btn btn-outline-warning btn-sm me-2 fw-bold" onclick="topupWalletPrompt('${u._id}')">
                 <i class="bi bi-wallet2 me-1"></i> + Top-Up
               </button>
               ${isUserAdmin ? `
@@ -281,7 +281,7 @@
       const auctionTable = document.getElementById('adminAuctionTable');
 
       const filtered = globalAdminAuctions.filter(a => 
-        a.productTitle.toLowerCase().includes(query) || a.category.toLowerCase().includes(query)
+        (a.productTitle || '').toLowerCase().includes(query) || (a.category || '').toLowerCase().includes(query)
       );
 
       if (filtered.length === 0) {
@@ -301,8 +301,8 @@
 
         auctionTable.innerHTML += `
           <tr>
-            <td class="ps-4 fw-bold text-dark">${a.productTitle}</td>
-            <td><span class="badge bg-light text-dark border">${a.category}</span></td>
+            <td class="ps-4 fw-bold text-dark">${a.productTitle || 'Campus Item'}</td>
+            <td><span class="badge bg-light text-dark border">${a.category || 'General'}</span></td>
             <td class="fw-bold text-success">₦${(a.currentPrice || 0).toLocaleString()}</td>
             <td class="small text-muted">${sellerName}</td>
             <td>
@@ -313,11 +313,11 @@
             <td class="small"><code>${passCode}</code></td>
             <td class="text-end pe-4">
               ${isLive ? `
-                <button class="btn btn-outline-warning btn-sm me-1 fw-bold" onclick="forceSettleAuction('${a._id}', '${a.productTitle}')" title="Force settle auction now and transfer funds">
+                <button class="btn btn-outline-warning btn-sm me-1 fw-bold" onclick="forceSettleAuction('${a._id}')" title="Force settle auction now and transfer funds">
                   ⚡ Settle Now
                 </button>
               ` : ''}
-              <button class="btn btn-outline-danger btn-sm fw-bold" onclick="deleteAuction('${a._id}', '${a.productTitle}')" title="Delete this auction">
+              <button class="btn btn-outline-danger btn-sm fw-bold" onclick="deleteAuction('${a._id}')" title="Delete this auction">
                 <i class="bi bi-trash"></i> Delete
               </button>
             </td>
@@ -350,7 +350,9 @@
       }
     }
 
-    async function topupWalletPrompt(userId, userName) {
+    async function topupWalletPrompt(userId) {
+      const user = globalAdminUsers.find(u => u._id === userId);
+      const userName = user ? user.fullName : 'user';
       const amount = prompt(`Enter virtual amount (₦) to credit to ${userName}:`, '50000');
       if (!amount) return;
 
@@ -377,7 +379,9 @@
       }
     }
 
-    async function deleteAuction(auctionId, title) {
+    async function deleteAuction(auctionId) {
+      const target = globalAdminAuctions.find(a => a._id === auctionId);
+      const title = target ? target.productTitle : 'this auction';
       if (!confirm(`Are you sure you want to delete auction "${title}"? This cannot be undone.`)) return;
 
       const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');
@@ -399,7 +403,9 @@
       }
     }
 
-    async function forceSettleAuction(auctionId, title) {
+    async function forceSettleAuction(auctionId) {
+      const target = globalAdminAuctions.find(a => a._id === auctionId);
+      const title = target ? target.productTitle : 'this auction';
       if (!confirm(`Force settle auction "${title}" right now? Highest bidder will win and funds will be transferred.`)) return;
 
       const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('fud_token');

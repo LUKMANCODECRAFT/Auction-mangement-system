@@ -231,14 +231,19 @@ exports.getMyBids = async (req, res) => {
 
     const userId = getDocId(req.user._id);
 
-    // Find all auctions containing bids from this user
-    const auctions = await Auction.find({ 'bids.bidder': req.user._id })
+    // Find all auctions containing bids from this user OR won by this user
+    const auctions = await Auction.find({
+      $or: [
+        { 'bids.bidder': req.user._id },
+        { winner: req.user._id }
+      ]
+    })
       .populate('seller', 'fullName email')
       .populate('winner', 'fullName email')
       .sort({ updatedAt: -1 });
 
     const formattedBids = auctions.map(auction => {
-      const userBids = auction.bids.filter(b => getDocId(b.bidder) === userId);
+      const userBids = (auction.bids || []).filter(b => b.bidder && getDocId(b.bidder) === userId);
       const maxUserBid = userBids.reduce((max, b) => {
         const amt = b.bidAmount || b.amount || 0;
         return amt > max ? amt : max;
@@ -252,7 +257,7 @@ exports.getMyBids = async (req, res) => {
         category: auction.category,
         imageUrl: auction.imageUrl,
         currentPrice: auction.currentPrice,
-        myHighestBid: maxUserBid,
+        myHighestBid: maxUserBid || (isWinner ? auction.currentPrice : 0),
         status: auction.status,
         isWinner,
         exchangePassCode: isWinner ? auction.exchangePassCode : null,
@@ -270,3 +275,4 @@ exports.getMyBids = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch your bid activity' });
   }
 };
+
